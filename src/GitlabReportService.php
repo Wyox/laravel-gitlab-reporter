@@ -22,7 +22,14 @@ class GitlabReportService
         private $client;
         private $project_id;
 
-        public function __construct($url,$token, $project_id)
+    /**
+     * GitlabReportService constructor.
+     * @param string $url
+     * @param string $token
+     * @param string $project_id
+     */
+
+    public function __construct($url, $token, $project_id)
         {
             $this->client = Client::create($url)->authenticate($token,\Gitlab\Client::AUTH_URL_TOKEN);
             $this->project_id = $project_id;
@@ -30,7 +37,11 @@ class GitlabReportService
         }
 
 
-        public function report(Exception $exception){
+    /**
+     * Report function to report exceptions. This will generate a Report and send it to GitLab as issue under the project
+     * @param Exception $exception
+     */
+    public function report(Exception $exception){
             // Get current request
             $request = $this->request();
 
@@ -51,7 +62,12 @@ class GitlabReportService
             return;
         }
 
-        private function request() : Request {
+
+    /**
+     * Returns the current Request
+     * @return \Illuminate\Http\Request
+     */
+    private function request() {
             return app(Request::class);
         }
 

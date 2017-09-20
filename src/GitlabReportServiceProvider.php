@@ -18,9 +18,9 @@ class GitlabReportServiceProvider extends ServiceProvider {
 
         $this->app->singleton('gitlab.report', function($app) {
 
-            $config = $app->make('config');
-            $url = $config->get('gitlab-report.url');
-            $token = $config->get('gitlab-report.token');
+            $config     = $app->make('config');
+            $url        = $config->get('gitlab-report.url');
+            $token      = $config->get('gitlab-report.token');
             $project_id = $config->get('gitlab-report.project_id');
 
             return new GitlabReportService($url,$token,$project_id);

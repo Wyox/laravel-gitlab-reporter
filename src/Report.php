@@ -1,9 +1,7 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: ivodebruijn
- * Date: 20/09/2017
- * Time: 21:58
+ *
+ * @author Ivo de Bruijn <ik@ivodebruijn.nl>
  */
 
 namespace Wyox\GitlabReport;
@@ -28,10 +26,19 @@ class Report
         $this->session = $session;
     }
 
+
+    /**
+     * Same as description
+     * @return string
+     */
     public function render(){
         return $this->description();
     }
 
+    /**
+     * Generates a description for the report
+     * @return string
+     */
     public function description(){
         // Return html string in Gitlab flavoured markdown
         return $this->renderException() . $this->renderUrl() . $this->renderForm(). $this->renderSession();
@@ -66,7 +73,6 @@ class Report
      * Returns a human readable severity code instead of a number. (e.g. E_NOTICE)
      * @return string
      */
-
     private function message(){
         $str = $this->exception->getMessage();
 
@@ -77,6 +83,10 @@ class Report
         return $str;
     }
 
+    /**
+     * Renders FORM data
+     * @return string
+     */
     private function renderForm(){
         $str = "#### Post Params\n\n```php\n";
         foreach($this->form as $key => $value){
@@ -86,6 +96,10 @@ class Report
         return $str;
     }
 
+    /**
+     * Renders URL parameters
+     * @return string
+     */
     private function renderUrl(){
         $str = "#### Url Params\n\n```php\n";
         foreach($this->get as $key => $value){
@@ -95,6 +109,10 @@ class Report
         return $str;
     }
 
+    /**
+     * Renders session values
+     * @return string
+     */
     private function renderSession(){
         $str = "#### Session Params\n\n```php\n";
         foreach($this->session as $key => $value){
@@ -104,6 +122,11 @@ class Report
         return $str;
     }
 
+    /**
+     * Renders a value
+     * @param $value
+     * @return string
+     */
     private function renderValue($value){
         if(is_string($value) || is_bool($value) || is_numeric($value) ){
             return $this->renderSimple($value);
@@ -112,14 +135,28 @@ class Report
         }
     }
 
+    /**
+     * Renders
+     * @return string
+     */
     private function renderComplex(){
         return " 'COMPLEX VALUE' ";
     }
 
+    /**
+     * @param $value
+     * @return mixed
+     */
+
     private function renderSimple($value){
-        return $value;
+        return (string) $value;
     }
 
+
+    /**
+     * Renders exception message in Markdown format
+     * @return string
+     */
     private function renderException(){
 
         return <<<EOF
@@ -138,6 +175,10 @@ EOF;
 
     }
 
+    /**
+     * Helper function, real newline is double newline in Markdown
+     * @return string
+     */
     private function newline(){
         return "\n\r\n\r";
     }
