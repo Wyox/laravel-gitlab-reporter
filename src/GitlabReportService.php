@@ -42,25 +42,32 @@ class GitlabReportService
      * @param Exception $exception
      */
     public function report(Exception $exception){
-            // Get current request
-            $request = $this->request();
 
-            $report = new Report($exception, $request->query(), $request->all(), $request->session() );
+            try {
 
-            $project = new Project($this->project_id,$this->client);
+                // Get current request
+                $request = $this->request();
 
+                $report = new Report($exception, $request);
 
-            // Check if an issue exists with the same title.
-            $issues = $project->issues(['search' => $report->title()]);
+                $project = new Project($this->project_id, $this->client);
 
-            if(empty($issues)){
-                $issue = $project->createIssue($report->title(), [
-                    'description' => $report->description()
-                ]);
+                // Check if an issue exists with the same title and is currently open.
+                $issues = $project->issues(['search' => $report->title(), 'state' => 'opened']);
+
+                if (empty($issues)) {
+                    $issue = $project->createIssue($report->title(), [
+                        'description' => $report->description()
+                    ]);
+                }
+            } catch (Exception $exp){
+                // Only for testing
+                // throw $exp;
             }
 
+
             return;
-        }
+    }
 
 
     /**

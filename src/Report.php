@@ -7,25 +7,38 @@
 namespace Wyox\GitlabReport;
 
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Session\Store;
+use Symfony\Component\VarDumper\Cloner\VarCloner;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class Report
 {
-    private $session;
-    private $form;
+    private $request;
     private $get;
+    private $form;
+    private $session;
     private $exception;
+    private $httpMethod;
+    private $host;
+    private $schema;
 
 
-    public function __construct(Exception $exception, $get = [], $form = [], Store $session)
+    public function __construct(Exception $exception, Request $request)
     {
         $this->exception = $exception;
-        $this->get = collect($get);
-        // Filter all parameters from get, usually not needed or available in the form
-        $this->form = collect($form)->diff($this->get);
-        $this->session = $session;
-    }
+        $this->request = $request;
 
+        $this->get = collect($request->query());
+        // Filter all parameters from get, usually not needed or available in the form
+        $this->form = collect($request->all())->diffKeys($this->get);
+        $this->session = $request->session()->all();
+        $this->path = $request->getPathInfo();
+        $this->httpMethod = $request->getMethod();
+        $this->host = $request->getHttpHost();
+        $this->url = $request->getRequestUri();
+        $this->schema = $request->getScheme();
+    }
 
     /**
      * Same as description
@@ -41,7 +54,7 @@ class Report
      */
     public function description(){
         // Return html string in Gitlab flavoured markdown
-        return $this->renderException() . $this->renderUrl() . $this->renderForm(). $this->renderSession();
+        return $this->renderSummary(). $this->renderUrl() . $this->renderForm(). $this->renderSession() . $this->renderException();
     }
 
     /**
@@ -60,10 +73,9 @@ class Report
     public function signature(){
         // Signature should be unique to the error (ignore session for now)
         $key = $this->message() . $this->exception->getFile() . $this->exception->getTraceAsString() . $this->exception->getCode();
-
         // This might fail if it has complex objects
-        $key .= $this->form->implode('');
-        $key .= $this->get->implode('');
+        $key .= $this->form->toJson();
+        $key .= $this->get->toJson();
 
 
         return hash('md5',$key);
@@ -89,9 +101,7 @@ class Report
      */
     private function renderForm(){
         $str = "#### Post Params\n\n```php\n";
-        foreach($this->form as $key => $value){
-            $str .= "FORM['" . $key . "'] = " . $this->renderValue($value) . "\n";
-        }
+        $str .= $this->renderValue($this->form);
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -102,9 +112,7 @@ class Report
      */
     private function renderUrl(){
         $str = "#### Url Params\n\n```php\n";
-        foreach($this->get as $key => $value){
-            $str .= "URL['" . $key . "'] = " . $this->renderValue($value) . "\n";
-        }
+        $str .= $this->renderValue($this->get);
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -114,10 +122,9 @@ class Report
      * @return string
      */
     private function renderSession(){
+        $session = $this->session;
         $str = "#### Session Params\n\n```php\n";
-        foreach($this->session as $key => $value){
-            $str .= "SESSION['" . $key . "'] = " . $this->renderValue($value) . "\n";
-        }
+        $str .= $this->renderValue($session);
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -128,46 +135,51 @@ class Report
      * @return string
      */
     private function renderValue($value){
-        if(is_string($value) || is_bool($value) || is_numeric($value) ){
-            return $this->renderSimple($value);
-        }else{
-            $this->renderComplex($value);
-        }
+        $cloner = new VarCloner();
+        $dumper = new CliDumper();
+        $output = '';
+
+        $dumper->dump(
+            $cloner->cloneVar($value),
+            function ($line, $depth) use (&$output) {
+                // A negative depth means "end of dump"
+                if ($depth >= 0) {
+                    // Adds a two spaces indentation to the line
+                    $output .= str_repeat('  ', $depth).$line."\n";
+                }
+            }
+        );
+
+        return $output;
     }
 
-    /**
-     * Renders
-     * @return string
-     */
-    private function renderComplex(){
-        return " 'COMPLEX VALUE' ";
+
+    private function renderSummary(){
+        return <<<EOF
+#### Error summary
+|  item    |  value   |
+| :------- | :------- |
+| Method   | {$this->httpMethod} |
+| Schema   | {$this->schema} |
+| Path     | {$this->path} |
+| URL      | {$this->schema}://{$this->host}{$this->url} |
+| Message  | {$this->message()} |
+| File     | {$this->exception->getFile()}:{$this->exception->getLine()} |
+
+
+EOF;
+
     }
-
-    /**
-     * @param $value
-     * @return mixed
-     */
-
-    private function renderSimple($value){
-        return (string) $value;
-    }
-
 
     /**
      * Renders exception message in Markdown format
      * @return string
      */
     private function renderException(){
-
         return <<<EOF
-#### Error summary
-**File** {$this->exception->getFile()}
-
-**Message** {$this->message()}
-
 **Trace** 
 ```php
-$this->exception->getTraceAsString()
+{$this->exception->getTraceAsString()}
 ```
 
 
