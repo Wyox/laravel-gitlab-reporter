@@ -32,7 +32,8 @@ class Report
         $this->get = collect($request->query());
         // Filter all parameters from get, usually not needed or available in the form
         $this->form = collect($request->all())->diffKeys($this->get);
-        $this->session = $request->session()->all();
+
+        $this->session = $request->hasSession() ? $request->session()->all() : collect();
         $this->path = $request->getPathInfo();
         $this->httpMethod = $request->getMethod();
         $this->host = $request->getHttpHost();
