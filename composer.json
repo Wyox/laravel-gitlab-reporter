@@ -2,7 +2,11 @@
     "name": "wyox/laravel-gitlab-reporter",
     "description": "GitLab error reporter for Laravel 5",
     "type": "library",
+    "keywords": ["gitlab", "error reporting"],
+    "license" : "MIT",
     "require": {
+        "php": ">=7.0",
+        "illuminate/support": "5.5.x|5.6.x",
         "m4tthumphrey/php-gitlab-api": "^9.3",
         "php-http/guzzle6-adapter": "^1.1"
     },
@@ -20,10 +24,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Wyox\\GitlabReport\\GitlabReportServiceProvider"
+                "Wyox\\GitlabReport\\ServiceProvider"
             ],
             "aliases": {
-                "GitlabReport": "Wyox\\GitlabReport\\GitlabReportFacade"
+                "GitlabReport": "Wyox\\GitlabReport\\Facade"
             }
         }
     }
