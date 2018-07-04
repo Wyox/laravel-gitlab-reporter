@@ -1,11 +1,10 @@
 {
-    "name": "wyox/gitlab-report",
+    "name": "wyox/laravel-gitlab-reporter",
     "description": "GitLab error reporter for Laravel 5",
     "type": "library",
     "require": {
         "m4tthumphrey/php-gitlab-api": "^9.3",
-        "php-http/guzzle6-adapter": "^1.1",
-        "laravel/framework": "5.5.*"
+        "php-http/guzzle6-adapter": "^1.1"
     },
     "authors": [
         {

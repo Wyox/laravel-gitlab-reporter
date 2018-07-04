@@ -8,11 +8,10 @@ namespace Wyox\GitlabReport;
 
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Session\Store;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 
-class Report
+class GitlabReport
 {
     private $request;
     private $get;
