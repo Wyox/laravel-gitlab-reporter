@@ -2,10 +2,8 @@
 
 namespace Wyox\GitlabReport;
 
-use Illuminate\Support\ServiceProvider;
 
-
-class GitlabReportServiceProvider extends ServiceProvider {
+class ServiceProvider extends \Illuminate\Support\ServiceProvider {
 
 
     public function boot() {
@@ -16,7 +14,7 @@ class GitlabReportServiceProvider extends ServiceProvider {
     public function register() {
         $this->mergeConfigFrom( __DIR__.'/../config/gitlab-report.php', 'gitlab-report');
 
-        $this->app->singleton('gitlab.report', function($app) {
+        $this->app->singleton(GitlabReportService::class, function($app) {
 
             $config     = $app->make('config');
             $url        = $config->get('gitlab-report.url');
@@ -25,8 +23,10 @@ class GitlabReportServiceProvider extends ServiceProvider {
 
             return new GitlabReportService($url,$token,$project_id);
         });
+
+        $this->app->alias(GitlabReportService::class, 'gitlab.report');
     }
     public function provides() {
-        return ['gitlab.report'];
+        return ['gitlab.report', GitlabReportService::class];
     }
 }
