@@ -13,14 +13,14 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class DefaultReport
 {
-    private $request;
-    private $get;
-    private $form;
-    private $session;
-    private $exception;
-    private $httpMethod;
-    private $host;
-    private $schema;
+    protected $request;
+    protected $get;
+    protected $form;
+    protected $session;
+    protected $exception;
+    protected $httpMethod;
+    protected $host;
+    protected $schema;
 
 
     public function __construct(Exception $exception, Request $request)
@@ -59,7 +59,9 @@ class DefaultReport
      */
     public function description(){
         // Return html string in Gitlab flavoured markdown
-        return $this->renderSummary() . $this->renderUrl() . $this->renderForm() . $this->renderSession() . $this->renderException();
+        // Due to the render identifier being so close to renderSummary the current markdown version of Gitlab (11.0.2) renders the identifier invisible.
+        // Highly likely to change if the markdown render engine changes in future versions. For now it's a simple hack to get around EE requirements for custom variables
+        return $this->renderSummary() . $this->renderIdentifier() . $this->renderUrl() . $this->renderForm() . $this->renderSession() . $this->renderException();
     }
 
     /**
@@ -90,7 +92,7 @@ class DefaultReport
      * Returns a human readable severity code instead of a number. (e.g. E_NOTICE)
      * @return string
      */
-    private function message(){
+    protected function message(){
         $str = $this->exception->getMessage();
 
         if(empty($str)){
@@ -104,7 +106,7 @@ class DefaultReport
      * Renders FORM data
      * @return string
      */
-    private function renderForm(){
+    protected function renderForm(){
         $str = "#### Post Params\n\n```php\n";
         $str .= $this->renderValue($this->form);
         $str .= "```" . $this->newline();
@@ -115,7 +117,7 @@ class DefaultReport
      * Renders URL parameters
      * @return string
      */
-    private function renderUrl(){
+    protected function renderUrl(){
         $str = "#### Url Params\n\n```php\n";
         $str .= $this->renderValue($this->get);
         $str .= "```" . $this->newline();
@@ -126,7 +128,7 @@ class DefaultReport
      * Renders session values
      * @return string
      */
-    private function renderSession(){
+    protected function renderSession(){
         $session = $this->session;
         $str = "#### Session Params\n\n```php\n";
         $str .= $this->renderValue($session);
@@ -139,7 +141,7 @@ class DefaultReport
      * @param $value
      * @return string
      */
-    private function renderValue($value){
+    protected function renderValue($value){
         $cloner = new VarCloner();
         $dumper = new CliDumper();
         $output = '';
@@ -158,10 +160,14 @@ class DefaultReport
         return $output;
     }
 
-
-    private function renderSummary(){
+    /**
+     * Renders the top summary of an issue with simple information
+     * @param $value
+     * @return string
+     */
+    protected function renderSummary(){
         $exception = get_class($this->exception);
-        $signature = $this->signature();
+
         return <<<EOF
 #### Error summary
 |  Type     |  Value   |
@@ -173,11 +179,6 @@ class DefaultReport
 | URL       | {$this->schema}://{$this->host}{$this->url} |
 | Message   | {$this->message()} |
 | File      | {$this->exception->getFile()}:{$this->exception->getLine()} |
-
-Identifier: `{$signature}`
-
-
-
 EOF;
 
     }
@@ -186,7 +187,7 @@ EOF;
      * Renders exception message in Markdown format
      * @return string
      */
-    private function renderException(){
+    protected function renderException(){
         return <<<EOF
 **Trace** 
 ```php
@@ -197,12 +198,25 @@ EOF;
 EOF;
 
     }
+    /**
+     * Renders the identifier which will be used to find issues in a project
+     * @return string
+     */
+    protected function renderIdentifier(){
+        $signature = $this->signature();
+
+        return <<<EOF
+            Identifier: `{$signature}`
+
+EOF;
+
+    }
 
     /**
      * Helper function, real newline is double newline in Markdown
      * @return string
      */
-    private function newline(){
+    protected function newline(){
         return "\n\r\n\r";
     }
 

@@ -9,6 +9,7 @@
 namespace Wyox\GitlabReport;
 
 // Use default Request facade
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 use Gitlab\Client;
@@ -16,6 +17,7 @@ use Gitlab\Model\Project;
 
 
 use Exception;
+use Wyox\GitlabReport\Reports\DatabaseReport;
 use Wyox\GitlabReport\Reports\DefaultReport;
 
 
@@ -24,6 +26,10 @@ class GitlabReportService
     private $client;
     private $project_id;
     private $labels;
+
+    private $reporters = [
+        QueryException::class => DatabaseReport::class
+    ];
 
     /**
      * GitlabReportService constructor.
@@ -52,7 +58,9 @@ class GitlabReportService
             // Get current request
             $request = $this->request();
 
-            $report = new DefaultReport($exception, $request);
+            $reporter = $this->reporter($exception);
+
+            $report = new $reporter($exception, $request);
 
             $project = new Project($this->project_id, $this->client);
 
@@ -75,6 +83,19 @@ class GitlabReportService
         return;
     }
 
+    private function reporter(Exception $exception){
+        // Get right reporter
+        $rc = DefaultReport::class;
+        
+        foreach($this->reporters as $key => $reporter){
+            if(is_a($exception, $key)){
+                $rc = $reporter;
+            }
+        }
+
+
+        return $rc;
+    }
 
     /**
      * Returns the current Request

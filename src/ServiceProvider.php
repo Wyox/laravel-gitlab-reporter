@@ -2,7 +2,6 @@
 
 namespace Wyox\GitlabReport;
 
-
 class ServiceProvider extends \Illuminate\Support\ServiceProvider {
 
 
@@ -10,6 +9,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider {
         $this->publishes([
             __DIR__.'/../config/gitlab-report.php' => config_path('gitlab-report.php'),
         ], 'gitlab-report');
+
     }
     public function register() {
         $this->mergeConfigFrom( __DIR__.'/../config/gitlab-report.php', 'gitlab-report');
