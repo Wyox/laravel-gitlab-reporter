@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Gitlab\Client;
 use Gitlab\Model\Project;
 
+
 use Exception;
 
 
@@ -48,7 +49,7 @@ class GitlabReportService
                 // Get current request
                 $request = $this->request();
 
-                $report = new GitlabReport($exception, $request);
+                $report = new ErrorReport($exception, $request);
 
                 $project = new Project($this->project_id, $this->client);
 
@@ -62,7 +63,7 @@ class GitlabReportService
                 }
             } catch (Exception $exp){
                 // Only for testing
-                // throw $exp;
+                 throw $exp;
             }
 
 

@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 
-class GitlabReport
+class ErrorReport
 {
     private $request;
     private $get;
