@@ -1,17 +1,17 @@
 <?php
 /**
  *
- * @author Ivo de Bruijn <ik@ivodebruijn.nl>
+ * @author Ivo de Bruijn <ivo@idobits.nl>
  */
 
-namespace Wyox\GitlabReport;
+namespace Wyox\GitlabReport\Reports;
 
 use Exception;
 use Illuminate\Http\Request;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 
-class ErrorReport
+class DefaultReport
 {
     private $request;
     private $get;
@@ -25,19 +25,24 @@ class ErrorReport
 
     public function __construct(Exception $exception, Request $request)
     {
-        $this->exception = $exception;
-        $this->request = $request;
+        $this->exception    = $exception;
+        $this->request      = $request;
 
-        $this->get = collect($request->query());
-        // Filter all parameters from get, usually not needed or available in the form
-        $this->form = collect($request->all())->diffKeys($this->get);
 
-        $this->session = $request->hasSession() ? $request->session()->all() : collect();
-        $this->path = $request->getPathInfo();
+
+        // Get all input from the user
+        $this->get      = collect($request->query->all());
+        $this->form     = collect($request->request->all());
+
+        // Request variables
+        $this->path     = $request->getPathInfo();
         $this->httpMethod = $request->getMethod();
-        $this->host = $request->getHttpHost();
-        $this->url = $request->getRequestUri();
-        $this->schema = $request->getScheme();
+        $this->host     = $request->getHttpHost();
+        $this->url      = $request->getRequestUri();
+        $this->schema   = $request->getScheme();
+
+        // Session information
+        $this->session  = $request->hasSession() ? $request->session()->all() : collect();
     }
 
     /**
@@ -54,7 +59,7 @@ class ErrorReport
      */
     public function description(){
         // Return html string in Gitlab flavoured markdown
-        return $this->renderSummary(). $this->renderUrl() . $this->renderForm(). $this->renderSession() . $this->renderException();
+        return $this->renderSummary() . $this->renderUrl() . $this->renderForm() . $this->renderSession() . $this->renderException();
     }
 
     /**
@@ -62,7 +67,7 @@ class ErrorReport
      * @return string
      */
     public function title(){
-        return "BUG: " . $this->message() . " - "  . $this->signature();
+        return "BUG: " . $this->message();
     }
 
     /**
@@ -155,16 +160,22 @@ class ErrorReport
 
 
     private function renderSummary(){
+        $exception = get_class($this->exception);
+        $signature = $this->signature();
         return <<<EOF
 #### Error summary
-|  item    |  value   |
-| :------- | :------- |
-| Method   | {$this->httpMethod} |
-| Schema   | {$this->schema} |
-| Path     | {$this->path} |
-| URL      | {$this->schema}://{$this->host}{$this->url} |
-| Message  | {$this->message()} |
-| File     | {$this->exception->getFile()}:{$this->exception->getLine()} |
+|  Type     |  Value   |
+| :-------- | :------- |
+| Type of   | {$exception}|
+| Method    | {$this->httpMethod} |
+| Schema    | {$this->schema} |
+| Path      | {$this->path} |
+| URL       | {$this->schema}://{$this->host}{$this->url} |
+| Message   | {$this->message()} |
+| File      | {$this->exception->getFile()}:{$this->exception->getLine()} |
+
+Identifier: `{$signature}`
+
 
 
 EOF;

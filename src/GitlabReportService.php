@@ -16,12 +16,14 @@ use Gitlab\Model\Project;
 
 
 use Exception;
+use Wyox\GitlabReport\Reports\DefaultReport;
 
 
 class GitlabReportService
 {
     private $client;
     private $project_id;
+    private $labels;
 
     /**
      * GitlabReportService constructor.
@@ -30,10 +32,11 @@ class GitlabReportService
      * @param string $project_id
      */
 
-    public function __construct($url, $token, $project_id)
+    public function __construct($url, $token, $project_id, $labels)
     {
         $this->client = Client::create($url)->authenticate($token,Client::AUTH_URL_TOKEN);
         $this->project_id = $project_id;
+        $this->labels = $labels;
         return $this;
     }
 
@@ -49,21 +52,23 @@ class GitlabReportService
             // Get current request
             $request = $this->request();
 
-            $report = new ErrorReport($exception, $request);
+            $report = new DefaultReport($exception, $request);
 
             $project = new Project($this->project_id, $this->client);
 
             // Check if an issue exists with the same title and is currently open.
-            $issues = $project->issues(['search' => $report->title(), 'state' => 'opened']);
+            $issues = $project->issues(['search' => "Identifier: `{$report->signature()}`", 'state' => 'opened']);
+
 
             if (empty($issues)) {
                 $issue = $project->createIssue($report->title(), [
-                    'description' => $report->description()
+                    'description' => $report->description(),
+                    'labels' => $this->labels
                 ]);
             }
         } catch (Exception $exp){
             // Only for testing
-            //throw $exp;
+            throw $exp;
         }
 
 

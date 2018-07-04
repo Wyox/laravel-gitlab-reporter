@@ -16,12 +16,13 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider {
 
         $this->app->singleton(GitlabReportService::class, function($app) {
 
-            $config     = $app->make('config');
-            $url        = $config->get('gitlab-report.url');
-            $token      = $config->get('gitlab-report.token');
-            $project_id = $config->get('gitlab-report.project_id');
+            $config         = $app->make('config');
+            $url            = $config->get('gitlab-report.url');
+            $token          = $config->get('gitlab-report.token');
+            $project_id     = $config->get('gitlab-report.project_id');
+            $labels         = $config->get('gitlab-report.labels');
 
-            return new GitlabReportService($url,$token,$project_id);
+            return new GitlabReportService($url,$token,$project_id,$labels);
         });
 
         $this->app->alias(GitlabReportService::class, 'gitlab.report');
