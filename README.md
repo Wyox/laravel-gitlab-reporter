@@ -5,17 +5,17 @@ If you are only using this package in production go to your `app/Exceptions/Hand
 
 
 ```php
-    public function report(Exception $exception)
-    {
-        // Ignore Gitlab Report in code coverage
-        // @codeCoverageIgnoreStart
-        if(env('APP_ENV') == 'production' && $this->shouldReport($exception)){
-            app('gitlab.report')->report($exception);
-        }
-        // @codeCoverageIgnoreEnd
-
-        parent::report($exception);
+public function report(Exception $exception)
+{
+    // Ignore Gitlab Report in code coverage
+    // @codeCoverageIgnoreStart
+    if(env('APP_ENV') == 'production' && $this->shouldReport($exception)){
+        app('gitlab.report')->report($exception);
     }
+    // @codeCoverageIgnoreEnd
+
+    parent::report($exception);
+}
 ```
 
 
