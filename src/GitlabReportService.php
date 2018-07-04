@@ -63,7 +63,7 @@ class GitlabReportService
                 }
             } catch (Exception $exp){
                 // Only for testing
-                 throw $exp;
+                 //throw $exp;
             }
 
 
