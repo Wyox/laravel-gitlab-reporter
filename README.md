@@ -9,9 +9,13 @@ This package will contact your Gitlab server and checks if an exception has occu
 
 # Installation
 
+Install with composer
 
-If you are only using this package in production go to your `app/Exceptions/Handler.php` file
+```bash 
+composer require wyox/laravel-gitlab-reporter
+```
 
+To use the Gitlab reporter you should change the following in your `app/Exceptions/Handler.php` file in your Laravel project
 
 ```php
 public function report(Exception $exception)
@@ -26,6 +30,8 @@ public function report(Exception $exception)
     parent::report($exception);
 }
 ```
+
+To test if your connection and settings work you could temporarily remove the `env('APP_ENV')` check, run the settings locally and see if everything works
 
 
 
