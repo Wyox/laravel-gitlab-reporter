@@ -69,7 +69,9 @@ class DefaultReport
      * @return string
      */
     public function title(){
-        return "BUG: " . $this->message();
+        // Max length for gitlab titles = 255.
+        // Message will be in the description of an issue anyways.
+        return "BUG: " . substr($this->message(), 0, 200);
     }
 
     /**
