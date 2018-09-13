@@ -6,6 +6,7 @@ This package will create issues in your Gitlab project if Exceptions occur and w
 
 This package will contact your Gitlab server and checks if an exception has occurred before based on a generated identifier hash in the issue description. Don't remove this line in the description as it will be the only way for this package to validate if an exception occurred before. 
 
+Gitlab version 9 or higher required.
 
 # Installation
 
@@ -53,7 +54,6 @@ To retrieve an access token go to your gitlab server to `profile/personal_access
 
 For your Project ID you need to go to your project -> Settings -> General -> General Project settings. There should be a box with Project ID
 
-
 # Adding labels to issues
 
 Adding labels to newly created issues is easy, just add a comma-separated list to `GITLAB_REPORT_LABELS=`
@@ -62,3 +62,18 @@ GITLAB_REPORT_LABELS=bug,critical
 ```
 
 If the labels don't exist in Gitlab they will be automatically created.
+
+
+# Ignoring certain exceptions
+
+Make sure you publish the config as setting exceptions is not possible using an .env file
+
+```bash
+php artisan vendor:publish --tag=gitlab-report
+```
+
+A file called gitlab-report.php will be created there and you can change settings there. A couple of exceptions have been added by default
+
+# Redacting fields in reports
+
+In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced with [redacted]. Fields that are filled with null will also be replaced with [redacted]
