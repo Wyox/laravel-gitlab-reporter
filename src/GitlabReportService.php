@@ -78,6 +78,7 @@ class GitlabReportService
      * @param Exception $exception
      */
     public function report(Exception $exception){
+
         if(!$this->isIgnored($exception)){
             try {
 
@@ -118,7 +119,7 @@ class GitlabReportService
     private function reporter(Exception $exception){
         // Get right reporter
         $rc = DefaultReport::class;
-        
+
         foreach($this->reporters as $key => $reporter){
             if(is_a($exception, $key)){
                 $rc = $reporter;
@@ -143,8 +144,8 @@ class GitlabReportService
      * @return bool
      */
     private function isIgnored(Exception $exception){
-        $ignored = false;
 
+        $ignored = false;
 
         foreach($this->ignoreExceptions as $class){
             if(is_a($exception, $class)){
@@ -201,7 +202,7 @@ class GitlabReportService
      */
     private function redact($key, $value){
         if(in_array($key, $this->redactedFields, true)){
-            return "[redacted]";
+            return "[hidden]";
         }else{
             return $value;
         }

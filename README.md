@@ -23,7 +23,7 @@ public function report(Exception $exception)
 {
     // Ignore Gitlab Report in code coverage
     // @codeCoverageIgnoreStart
-    if(env('APP_ENV') == 'production' && $this->shouldReport($exception)){
+    if(config('app.env') == 'production' && $this->shouldReport($exception)){
         app('gitlab.report')->report($exception);
     }
     // @codeCoverageIgnoreEnd
@@ -32,7 +32,7 @@ public function report(Exception $exception)
 }
 ```
 
-To test if your connection and settings work you could temporarily remove the `env('APP_ENV')` check, run the settings locally and see if everything works
+To test if your connection and settings work you could temporarily remove the `config('app.env')` check, run the settings locally and see if everything works
 
 
 
@@ -74,6 +74,6 @@ php artisan vendor:publish --tag=gitlab-report
 
 A file called gitlab-report.php will be created there and you can change settings there. A couple of exceptions have been added by default
 
-# Redacting fields in reports
+# Hiding fields in reports
 
-In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced with [redacted]. Fields that are filled with null will also be replaced with [redacted]
+In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced with [hidden]. Fields that are filled with null will also be replaced with [hidden]
