@@ -9,14 +9,11 @@
 namespace Wyox\GitlabReport;
 
 // Use default Request facade
-use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
-
+use Exception;
 use Gitlab\Client;
 use Gitlab\Model\Project;
-
-
-use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Wyox\GitlabReport\Reports\DatabaseReport;
 use Wyox\GitlabReport\Reports\DefaultReport;
 
@@ -64,11 +61,11 @@ class GitlabReportService
 
     public function __construct($url, $token, $project_id, $labels, $ignoreExceptions, $redactedFields)
     {
-        $this->client = Client::create($url)->authenticate($token,Client::AUTH_URL_TOKEN);
+        $this->client = Client::create($url)->authenticate($token, Client::AUTH_URL_TOKEN);
         $this->project_id = $project_id;
         $this->labels = $labels;
         $this->ignoreExceptions = $ignoreExceptions;
-        $this->redactedFields = $redactedFields ? $redactedFields : [] ;
+        $this->redactedFields = $redactedFields ? $redactedFields : [];
         return $this;
     }
 
@@ -77,9 +74,10 @@ class GitlabReportService
      * GitlabReport function to report exceptions. This will generate a GitlabReport and send it to GitLab as issue under the project
      * @param Exception $exception
      */
-    public function report(Exception $exception){
+    public function report(Exception $exception)
+    {
 
-        if(!$this->isIgnored($exception)){
+        if (!$this->isIgnored($exception)) {
             try {
 
                 // Get current request
@@ -101,7 +99,7 @@ class GitlabReportService
                         'labels' => $this->labels
                     ]);
                 }
-            } catch (Exception $exp){
+            } catch (Exception $exp) {
                 // Only for testing
                 // throw $exp;
             }
@@ -116,12 +114,13 @@ class GitlabReportService
      * @param Exception $exception
      * @return mixed|string
      */
-    private function reporter(Exception $exception){
+    private function reporter(Exception $exception)
+    {
         // Get right reporter
         $rc = DefaultReport::class;
 
-        foreach($this->reporters as $key => $reporter){
-            if(is_a($exception, $key)){
+        foreach ($this->reporters as $key => $reporter) {
+            if (is_a($exception, $key)) {
                 $rc = $reporter;
             }
         }
@@ -131,9 +130,10 @@ class GitlabReportService
 
     /**
      * Returns the current Request
-     * @return \Illuminate\Http\Request
+     * @return Request
      */
-    private function request() {
+    private function request()
+    {
         return app(Request::class);
     }
 
@@ -143,14 +143,15 @@ class GitlabReportService
      * @param Exception $exception
      * @return bool
      */
-    private function isIgnored(Exception $exception){
+    private function isIgnored(Exception $exception)
+    {
 
         $ignored = false;
 
-        foreach($this->ignoreExceptions as $class){
-            if(is_a($exception, $class)){
-               $ignored = true;
-               break;
+        foreach ($this->ignoreExceptions as $class) {
+            if (is_a($exception, $class)) {
+                $ignored = true;
+                break;
             }
         }
 
@@ -163,12 +164,13 @@ class GitlabReportService
      * @param Request $request
      * @return Request
      */
-    private function redactRequest(Request $request){
+    private function redactRequest(Request $request)
+    {
 
         $request->query->replace($this->redactArray($request->query->all()));
         $request->request->replace($this->redactArray($request->request->all()));
 
-        if($request->hasSession()){
+        if ($request->hasSession()) {
             $request->session()->replace($this->redactArray($request->session()->all()));
         }
 
@@ -180,14 +182,15 @@ class GitlabReportService
      * @param $array
      * @return mixed
      */
-    private function redactArray($array){
-        foreach($array as $key => $value){
-            if(is_array($array[$key])){
+    private function redactArray($array)
+    {
+        foreach ($array as $key => $value) {
+            if (is_array($array[$key])) {
                 $array[$key] = $this->redactArray($array[$key]);
             }
 
-            if(is_string($array[$key]) || is_bool($array[$key]) || is_numeric($array[$key]) || is_null($array[$key])){
-                $array[$key] = $this->redact($key,$value);
+            if (is_string($array[$key]) || is_bool($array[$key]) || is_numeric($array[$key]) || is_null($array[$key])) {
+                $array[$key] = $this->redact($key, $value);
             }
         }
 
@@ -200,14 +203,14 @@ class GitlabReportService
      * @param $value
      * @return string
      */
-    private function redact($key, $value){
-        if(in_array($key, $this->redactedFields, true)){
+    private function redact($key, $value)
+    {
+        if (in_array($key, $this->redactedFields, true)) {
             return "[hidden]";
-        }else{
+        } else {
             return $value;
         }
     }
-
 
 
 }
