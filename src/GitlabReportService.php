@@ -94,7 +94,7 @@ class GitlabReportService
 
 
                 if (empty($issues)) {
-                    $issue = $project->createIssue($report->title(), [
+                    $issue = $project->createIssue(substr($report->title(), 0, 254), [
                         'description' => $report->description(),
                         'labels' => $this->labels
                     ]);
