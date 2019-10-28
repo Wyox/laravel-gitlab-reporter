@@ -1,6 +1,6 @@
 {
     "name": "wyox/laravel-gitlab-reporter",
-    "description": "GitLab error reporter for Laravel 5",
+    "description": "GitLab error reporter for Laravel 5/6",
     "type": "library",
     "keywords": ["gitlab", "error reporting"],
     "license" : "MIT",
