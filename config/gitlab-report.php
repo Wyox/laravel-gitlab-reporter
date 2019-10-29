@@ -11,5 +11,6 @@ return [
     'redacted-fields' => [
         'password',
         'password_confirmation'
-    ]
+    ],
+    'debug' => env('GITLAB_REPORT_DEBUG', false) // Used for debugging issues between this and the gitlab api
 ];

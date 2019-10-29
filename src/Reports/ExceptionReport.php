@@ -8,49 +8,21 @@ namespace Wyox\GitlabReport\Reports;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 
-class DefaultReport
+class ExceptionReport extends Report
 {
     protected $request;
-    protected $get;
-    protected $form;
-    protected $session;
     protected $exception;
-    protected $httpMethod;
-    protected $host;
-    protected $schema;
+
 
 
     public function __construct(Exception $exception, Request $request)
     {
         $this->exception = $exception;
-        $this->request = $request;
-
-
-        // Get all input from the user
-        $this->get = collect($request->query->all());
-        $this->form = collect($request->request->all());
-
-        // Request variables
-        $this->path = $request->getPathInfo();
-        $this->httpMethod = $request->getMethod();
-        $this->host = $request->getHttpHost();
-        $this->url = $request->getRequestUri();
-        $this->schema = $request->getScheme();
-
-        // Session information
-        $this->session = $request->hasSession() ? $request->session()->all() : collect();
-    }
-
-    /**
-     * Same as description
-     * @return string
-     */
-    public function render()
-    {
-        return $this->description();
+        $this->request  = $request;
     }
 
     /**
@@ -63,7 +35,7 @@ class DefaultReport
         // Due to the render identifier being so close to renderSummary the current markdown version of Gitlab (11.0.2) renders the identifier invisible.
         // Highly likely to change if the markdown render engine changes in future versions. For now it's a simple hack to get around EE requirements for custom variables
         return $this->renderSummary() .
-            $this->renderIdentifier() .
+            $this->identifier() .
             $this->renderUrl() .
             $this->renderForm() .
             $this->renderSession() .
@@ -71,46 +43,14 @@ class DefaultReport
     }
 
     /**
-     * Generates a GitLab issue title
-     * @return string
-     */
-    public function title()
-    {
-        // Max length for gitlab titles = 255.
-        // Message will be in the description of an issue anyways.
-        return "BUG: " . substr($this->message(), 0, 200);
-    }
-
-    /**
-     * This returns a unique signature based on the exception, the query and input parameters
-     * @return string
-     */
-
-    public function signature()
-    {
-        // Signature should be unique to the error (ignore session for now)
-        $key = $this->message() . $this->exception->getFile() . $this->exception->getTraceAsString() . $this->exception->getCode();
-        // This might fail if it has complex objects
-        $key .= $this->form->toJson();
-        $key .= $this->get->toJson();
-
-
-        return hash('md5', $key);
-    }
-
-    /**
      * Returns a human readable severity code instead of a number. (e.g. E_NOTICE)
      * @return string
      */
-    protected function message()
+    public function message()
     {
-        $str = $this->exception->getMessage();
-
-        if (empty($str)) {
-            $str = get_class($this->exception);
-        }
-
-        return $str;
+        return !empty($this->exception->getMessage())
+            ? $this->exception->getMessage()
+            : get_class($this->exception);
     }
 
     /**
@@ -120,7 +60,7 @@ class DefaultReport
     protected function renderForm()
     {
         $str = "#### Post Params\n\n```php\n";
-        $str .= $this->renderValue($this->form);
+        $str .= $this->renderValue((new Collection($this->request->request->all())));
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -132,7 +72,7 @@ class DefaultReport
     protected function renderUrl()
     {
         $str = "#### Url Params\n\n```php\n";
-        $str .= $this->renderValue($this->get);
+        $str .= $this->renderValue((new Collection($this->request->query->all())));
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -143,9 +83,8 @@ class DefaultReport
      */
     protected function renderSession()
     {
-        $session = $this->session;
         $str = "#### Session Params\n\n```php\n";
-        $str .= $this->renderValue($session);
+        $str .= $this->renderValue($this->session());
         $str .= "```" . $this->newline();
         return $str;
     }
@@ -189,10 +128,10 @@ class DefaultReport
 |  Type     |  Value   |
 | :-------- | :------- |
 | Type of   | {$exception}|
-| Method    | {$this->httpMethod} |
-| Schema    | {$this->schema} |
-| Path      | {$this->path} |
-| URL       | {$this->schema}://{$this->host}{$this->url} |
+| Method    | {$this->request->getMethod()} |
+| Schema    | {$this->request->getScheme()} |
+| Path      | {$this->request->getPathInfo()} |
+| URL       | {$this->request->getScheme()}://{$this->request->getHttpHost()}{$this->request->getRequestUri()} |
 | Message   | {$this->message()} |
 | File      | {$this->exception->getFile()}:{$this->exception->getLine()} |
 EOF;
@@ -220,12 +159,10 @@ EOF;
      * Renders the identifier which will be used to find issues in a project
      * @return string
      */
-    protected function renderIdentifier()
+    public function identifier()
     {
-        $signature = $this->signature();
-
         return <<<EOF
-            Identifier: `{$signature}`
+            Identifier: `{$this->signature()}`
 
 EOF;
 
@@ -238,6 +175,11 @@ EOF;
     protected function newline()
     {
         return "\n\r\n\r";
+    }
+
+    private function session()
+    {
+        return $this->request->hasSession() ? $this->request->session()->all() : collect();
     }
 
 

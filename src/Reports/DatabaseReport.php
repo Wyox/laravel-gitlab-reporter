@@ -10,7 +10,7 @@ namespace Wyox\GitlabReport\Reports;
 
 use Illuminate\Support\Str;
 
-class DatabaseReport extends DefaultReport
+class DatabaseReport extends ExceptionReport
 {
 
     public function title()
