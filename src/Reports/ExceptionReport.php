@@ -14,10 +14,10 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class ExceptionReport extends Report
 {
+    /** @var Request $request */
     protected $request;
+    /** @var Exception $exception */
     protected $exception;
-
-
 
     public function __construct(Exception $exception, Request $request)
     {
@@ -36,6 +36,7 @@ class ExceptionReport extends Report
         // Highly likely to change if the markdown render engine changes in future versions. For now it's a simple hack to get around EE requirements for custom variables
         return $this->renderSummary() .
             $this->identifier() .
+            $this->renderUser() .
             $this->renderUrl() .
             $this->renderForm() .
             $this->renderSession() .
@@ -89,6 +90,24 @@ class ExceptionReport extends Report
         return $str;
     }
 
+    protected function renderUser()
+    {
+
+        $str = "#### User \n\n```php\n";
+        if(!empty($this->user)){
+            $str = "#### User \n\n```php\n";
+            $str .= $this->renderValue($this->user());
+            $str .= "```" . $this->newline();
+        } else {
+            $str = "#### User \n\n";
+            $str .= "```Unauthenticated```";
+            $str .= $this->newline();
+        }
+
+
+        return $str;
+    }
+
     /**
      * Renders a value
      * @param $value
@@ -122,6 +141,8 @@ class ExceptionReport extends Report
     protected function renderSummary()
     {
         $exception = get_class($this->exception);
+        $authenticatedUser = $this->user();
+        $isAuthenticated = !empty($authenticatedUser) ? "Yes" : "No";
 
         return <<<EOF
 #### Error summary
@@ -133,6 +154,7 @@ class ExceptionReport extends Report
 | Path      | {$this->request->getPathInfo()} |
 | URL       | {$this->request->getScheme()}://{$this->request->getHttpHost()}{$this->request->getRequestUri()} |
 | Message   | {$this->message()} |
+| Authenticated | {$isAuthenticated} |
 | File      | {$this->exception->getFile()}:{$this->exception->getLine()} |
 EOF;
 
@@ -145,7 +167,7 @@ EOF;
     protected function renderException()
     {
         return <<<EOF
-**Trace** 
+**Trace**
 ```php
 {$this->exception->getTraceAsString()}
 ```
@@ -180,6 +202,11 @@ EOF;
     private function session()
     {
         return $this->request->hasSession() ? $this->request->session()->all() : collect();
+    }
+
+    private function user()
+    {
+        return $this->request->user();
     }
 
 
