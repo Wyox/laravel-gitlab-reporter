@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 
 abstract class Report
 {
-
     protected $exception;
     protected $request;
 
@@ -42,7 +41,7 @@ abstract class Report
     public function render()
     {
         // Limit string to 1048575 characters per gitlab api limit
-        return substr($this->description(),0, 1048575);
+        return substr($this->description(), 0, 1048575);
     }
 
     /**

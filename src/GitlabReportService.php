@@ -18,7 +18,6 @@ use Wyox\GitlabReport\Reports\DatabaseReport;
 use Wyox\GitlabReport\Reports\ExceptionReport;
 use Wyox\GitlabReport\Reports\Report;
 
-
 /**
  * Class GitlabReportService
  * @package Wyox\GitlabReport
@@ -62,7 +61,7 @@ class GitlabReportService
 
     public function __construct($config)
     {
-        if(!empty($config['url']) && !empty($config['token'])){
+        if (!empty($config['url']) && !empty($config['token'])) {
             $this->client = Client::create($config['url'])->authenticate($config['token'], Client::AUTH_URL_TOKEN);
         }
 
@@ -101,7 +100,8 @@ class GitlabReportService
 
 
                 if (empty($issues)) {
-                    $issue = $project->createIssue($report->title(),
+                    $issue = $project->createIssue(
+                        $report->title(),
                         [
                         'description' => $report->description(),
                         'labels' => $this->labels
@@ -109,7 +109,7 @@ class GitlabReportService
                     );
                 }
             } catch (Exception $exp) {
-                if($this->config['debug']){
+                if ($this->config['debug']) {
                     throw $exp;
                 }
             }
@@ -154,14 +154,15 @@ class GitlabReportService
      */
     private function isIgnored(Exception $exception)
     {
-        $ignored = array_filter($this->config['ignore-exceptions'], function($class) use ($exception){
+        $ignored = array_filter($this->config['ignore-exceptions'], function ($class) use ($exception) {
             return is_a($exception, $class);
         });
 
         return count($ignored) > 0;
     }
 
-    private function canReport(Exception $exception){
+    private function canReport(Exception $exception)
+    {
         return !$this->isIgnored($exception);
     }
 
@@ -190,7 +191,6 @@ class GitlabReportService
      */
     private function redactArray($array)
     {
-
         foreach ($array as $key => $value) {
             if (is_array($array[$key])) {
                 $array[$key] = $this->redactArray($array[$key]);
@@ -218,6 +218,4 @@ class GitlabReportService
             return $value;
         }
     }
-
-
 }

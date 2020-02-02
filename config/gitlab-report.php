@@ -6,11 +6,11 @@ return [
     'project_id' => env('GITLAB_REPORT_PROJECT_ID'),
     'labels' => env('GITLAB_REPORT_LABELS', ''),
     'ignore-exceptions' => [
-        \Symfony\Component\Console\Exception\CommandNotFoundException::class
+        \Symfony\Component\Console\Exception\CommandNotFoundException::class,
     ],
     'redacted-fields' => [
         'password',
-        'password_confirmation'
+        'password_confirmation',
     ],
-    'debug' => env('GITLAB_REPORT_DEBUG', false) // Used for debugging issues between this and the gitlab api
+    'debug' => env('GITLAB_REPORT_DEBUG', false),
 ];
