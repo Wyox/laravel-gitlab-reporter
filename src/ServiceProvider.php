@@ -2,8 +2,6 @@
 
 namespace Wyox\GitlabReport;
 
-use Wyox\GitlabReport\GitlabReportService as GitlabReportService;
-
 /**
  * Class ServiceProvider
  * @package Wyox\GitlabReport

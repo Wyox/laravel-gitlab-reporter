@@ -23,7 +23,7 @@ public function report(Exception $exception)
 {
     // Ignore Gitlab Report in code coverage
     // @codeCoverageIgnoreStart
-    if(config('app.env') == 'production' && $this->shouldReport($exception)){
+    if(app()->bound('gitlab.report') && $this->shouldReport($exception)){
         app('gitlab.report')->report($exception);
     }
     // @codeCoverageIgnoreEnd
@@ -31,8 +31,6 @@ public function report(Exception $exception)
     parent::report($exception);
 }
 ```
-
-To test if your connection and settings work you could temporarily remove the `config('app.env')` check, run the settings locally and see if everything works
 
 
 
