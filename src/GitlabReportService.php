@@ -62,7 +62,10 @@ class GitlabReportService
 
     public function __construct($config)
     {
-        $this->client = Client::create($config['url'])->authenticate($config['token'], Client::AUTH_URL_TOKEN);
+        if(!empty($config['url']) && !empty($config['token'])){
+            $this->client = Client::create($config['url'])->authenticate($config['token'], Client::AUTH_URL_TOKEN);
+        }
+
         $this->config = $config;
 
         return $this;
@@ -75,7 +78,7 @@ class GitlabReportService
      */
     public function report(Exception $exception)
     {
-        if ($this->isReported($exception)) {
+        if ($this->canReport($exception) && !empty($this->client)) {
             try {
 
                 // Get current request
@@ -95,7 +98,6 @@ class GitlabReportService
                     'search' => $report->identifier(),
                     'state' => 'opened'
                 ]);
-
 
 
                 if (empty($issues)) {
@@ -159,7 +161,7 @@ class GitlabReportService
         return count($ignored) > 0;
     }
 
-    private function isReported(Exception $exception){
+    private function canReport(Exception $exception){
         return !$this->isIgnored($exception);
     }
 
