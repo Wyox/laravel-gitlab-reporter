@@ -60,9 +60,14 @@ class ExceptionReport extends Report
      */
     protected function renderForm()
     {
-        $str = "#### Post Params\n\n```php\n";
+        $str = "#### Post Params\n\n";
+        $str .= "<details>";
+        $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
+        $str .= "```php\n";
         $str .= $this->renderValue((new Collection($this->request->request->all())));
-        $str .= "```" . $this->newline();
+        $str .= "```\n\n";
+        $str .= "</details>";
+        $str .= $this->newline();
         return $str;
     }
 
@@ -72,9 +77,14 @@ class ExceptionReport extends Report
      */
     protected function renderUrl()
     {
-        $str = "#### Url Params\n\n```php\n";
+        $str = "#### Url Params\n\n";
+        $str .= "<details>";
+        $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
+        $str .= "```php\n";
         $str .= $this->renderValue((new Collection($this->request->query->all())));
-        $str .= "```" . $this->newline();
+        $str .= "```\n\n";
+        $str .= "</details>";
+        $str .= $this->newline();
         return $str;
     }
 
@@ -84,26 +94,37 @@ class ExceptionReport extends Report
      */
     protected function renderSession()
     {
-        $str = "#### Session Params\n\n```php\n";
+        $str = "#### Session Params\n\n";
+        $str .= "<details>";
+        $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
+        $str .= "```php\n";
         $str .= $this->renderValue($this->session());
-        $str .= "```" . $this->newline();
+        $str .= "```\n\n";
+        $str .= "</details>";
+        $str .= $this->newline();
+
         return $str;
     }
 
+    /**
+     * @return string
+     */
     protected function renderUser()
     {
-
-        $str = "#### User \n\n```php\n";
-        if(!empty($this->user)){
-            $str = "#### User \n\n```php\n";
+        if (!empty($this->user)) {
+            $str = "#### User \n\n";
+            $str .= "<details>";
+            $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
+            $str .= "```php\n";
             $str .= $this->renderValue($this->user());
-            $str .= "```" . $this->newline();
+            $str .= "```\n\n";
+            $str .= "</details>";
+            $str .= $this->newline();
         } else {
             $str = "#### User \n\n";
             $str .= "```Unauthenticated```";
             $str .= $this->newline();
         }
-
 
         return $str;
     }
@@ -157,7 +178,6 @@ class ExceptionReport extends Report
 | Authenticated | {$isAuthenticated} |
 | File      | {$this->exception->getFile()}:{$this->exception->getLine()} |
 EOF;
-
     }
 
     /**
@@ -174,7 +194,6 @@ EOF;
 
 
 EOF;
-
     }
 
     /**
@@ -187,7 +206,6 @@ EOF;
             Identifier: `{$this->signature()}`
 
 EOF;
-
     }
 
     /**
@@ -208,6 +226,4 @@ EOF;
     {
         return $this->request->user();
     }
-
-
 }
