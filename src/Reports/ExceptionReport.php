@@ -14,26 +14,20 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 
 class ExceptionReport extends Report
 {
-    /** @var Request $request */
-    protected $request;
-    /** @var Exception $exception */
-    protected $exception;
-
-    public function __construct(Exception $exception, Request $request)
-    {
-        $this->exception = $exception;
-        $this->request  = $request;
-    }
-
     /**
      * Generates a description for the report
+     *
      * @return string
      */
     public function description()
     {
         // Return html string in Gitlab flavoured markdown
-        // Due to the render identifier being so close to renderSummary the current markdown version of Gitlab (11.0.2) renders the identifier invisible.
-        // Highly likely to change if the markdown render engine changes in future versions. For now it's a simple hack to get around EE requirements for custom variables
+        // Due to the render identifier being so close to renderSummary
+        // the current markdown version of Gitlab (11.0.2)
+        // renders the identifier invisible. Highly likely to change if
+        // the markdown render engine changes in future versions.
+        // For now it's a simple hack to get around EE requirements
+        // for custom variables
         return $this->renderSummary() .
             $this->identifier() .
             $this->renderUser() .
@@ -45,6 +39,7 @@ class ExceptionReport extends Report
 
     /**
      * Returns a human readable severity code instead of a number. (e.g. E_NOTICE)
+     *
      * @return string
      */
     public function message()
@@ -56,6 +51,7 @@ class ExceptionReport extends Report
 
     /**
      * Renders FORM data
+     *
      * @return string
      */
     protected function renderForm()
@@ -73,6 +69,7 @@ class ExceptionReport extends Report
 
     /**
      * Renders URL parameters
+     *
      * @return string
      */
     protected function renderUrl()
@@ -90,6 +87,7 @@ class ExceptionReport extends Report
 
     /**
      * Renders session values
+     *
      * @return string
      */
     protected function renderSession()
@@ -131,6 +129,7 @@ class ExceptionReport extends Report
 
     /**
      * Renders a value
+     *
      * @param $value
      * @return string
      */
@@ -156,7 +155,7 @@ class ExceptionReport extends Report
 
     /**
      * Renders the top summary of an issue with simple information
-     * @param $value
+     *
      * @return string
      */
     protected function renderSummary()
@@ -182,6 +181,7 @@ EOF;
 
     /**
      * Renders exception message in Markdown format
+     *
      * @return string
      */
     protected function renderException()
@@ -198,6 +198,7 @@ EOF;
 
     /**
      * Renders the identifier which will be used to find issues in a project
+     *
      * @return string
      */
     public function identifier()
@@ -210,6 +211,7 @@ EOF;
 
     /**
      * Helper function, real newline is double newline in Markdown
+     *
      * @return string
      */
     protected function newline()

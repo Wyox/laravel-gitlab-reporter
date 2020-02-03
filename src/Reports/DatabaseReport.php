@@ -12,7 +12,10 @@ use Illuminate\Support\Str;
 
 class DatabaseReport extends ExceptionReport
 {
-
+    /**
+     *
+     * @return string
+     */
     public function title()
     {
         return "DATABASE: " . $this->message();
@@ -20,6 +23,7 @@ class DatabaseReport extends ExceptionReport
 
     /**
      * Generates a description for the report
+     *
      * @return string
      */
     public function description()
@@ -31,16 +35,20 @@ class DatabaseReport extends ExceptionReport
 
     /**
      * Renders Queries
+     *
      * @return string
      */
     protected function renderSQL()
     {
         $exception = $this->exception;
         $str = "#### SQL\n\n```sql\n";
-        $str .= Str::replaceArray('?', $this->exception->getBindings(), $this->exception->getSql()) . $this->newline();
+        $str .= Str::replaceArray(
+            '?',
+            $this->exception->getBindings(),
+            $this->exception->getSql()
+        ) . $this->newline();
         $str .= "```" . $this->newline();
 
         return $str;
     }
-
 }

@@ -36,14 +36,7 @@ class GitlabReportService
      * @var string Contains all the labels applied to an issue
      */
     private $labels;
-    /**
-     * @var array Contains all classes that will be ignored
-     */
-    private $ignoreExceptions;
-    /**
-     * @var array contains all fields as string that will be redacted in a report
-     */
-    private $redactedFields;
+
 
     /**
      * @var array
@@ -54,9 +47,7 @@ class GitlabReportService
 
     /**
      * GitlabReportService constructor.
-     * @param string $url
-     * @param string $token
-     * @param string $project_id
+     * @param $config
      */
 
     public function __construct($config)
@@ -74,6 +65,7 @@ class GitlabReportService
     /**
      * GitlabReport function to report exceptions. This will generate a GitlabReport and send it to GitLab as issue under the project
      * @param Exception $exception
+     * @throws Exception
      */
     public function report(Exception $exception)
     {

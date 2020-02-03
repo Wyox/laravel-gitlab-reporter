@@ -11,6 +11,11 @@ abstract class Report
     protected $exception;
     protected $request;
 
+    /**
+     * Report constructor.
+     * @param \Exception $exception
+     * @param Request $request
+     */
     public function __construct(\Exception $exception, Request $request)
     {
         $this->exception = $exception;
@@ -19,6 +24,7 @@ abstract class Report
 
     /**
      * This returns a unique signature based on the exception, the query and input parameters
+     *
      * @return string
      */
 
@@ -36,6 +42,7 @@ abstract class Report
 
     /**
      * Returns description "rendered"
+     *
      * @return string
      */
     public function render()
@@ -46,6 +53,7 @@ abstract class Report
 
     /**
      * Generates a GitLab issue title
+     *
      * @return string
      */
     public function title()
@@ -53,7 +61,24 @@ abstract class Report
         return substr("BUG: {$this->message()}", 0, 254);
     }
 
+    /**
+     * Returns the title of the issue
+     *
+     * @return string
+     */
     abstract public function message();
+
+    /**
+     * Returns the issue in markdown
+     *
+     * @return string
+     */
     abstract public function description();
+
+    /**
+     * Should return the unique identifier for this issue
+     *
+     * @return string
+     */
     abstract public function identifier();
 }

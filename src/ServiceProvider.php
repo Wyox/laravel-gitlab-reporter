@@ -4,10 +4,15 @@ namespace Wyox\GitlabReport;
 
 /**
  * Class ServiceProvider
+ *
  * @package Wyox\GitlabReport
  */
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
+
+    /**
+     * @return void
+     */
     public function boot()
     {
         $this->publishes([
@@ -15,6 +20,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         ], 'gitlab-report');
     }
 
+    /**
+     * @return void
+     */
     public function register()
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/gitlab-report.php', 'gitlab-report');
@@ -23,17 +31,17 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             GitlabReportService::class,
             function ($app) {
                 $config = array_merge(
-                [
-                    'url' => null,
-                    'token' => null,
-                    'project_id' => null,
-                    'labels' => '',
-                    'ignore-exceptions' => [],
-                    'redacted-fields' => [],
-                    'debug' => false
-                ],
-                $app->make('config')->get('gitlab-report', [])
-            );
+                    [
+                        'url' => null,
+                        'token' => null,
+                        'project_id' => null,
+                        'labels' => '',
+                        'ignore-exceptions' => [],
+                        'redacted-fields' => [],
+                        'debug' => false
+                    ],
+                    $app->make('config')->get('gitlab-report', [])
+                );
 
                 return new GitlabReportService($config);
             }
@@ -42,6 +50,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->app->alias(GitlabReportService::class, 'gitlab.report');
     }
 
+    /**
+     * @return array
+     */
     public function provides()
     {
         return ['gitlab.report', GitlabReportService::class];
