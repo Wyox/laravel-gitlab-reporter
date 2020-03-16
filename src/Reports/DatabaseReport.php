@@ -22,7 +22,7 @@ class DatabaseReport extends ExceptionReport
     }
 
     /**
-     * Generates a description for the report
+     * Generates a description for the report.
      *
      * @return string
      */
@@ -34,7 +34,7 @@ class DatabaseReport extends ExceptionReport
 
 
     /**
-     * Renders Queries
+     * Renders Queries.
      *
      * @return string
      */

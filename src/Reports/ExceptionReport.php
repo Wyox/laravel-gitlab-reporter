@@ -38,7 +38,7 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Returns a human readable severity code instead of a number. (e.g. E_NOTICE)
+     * Returns a human readable severity code instead of a number. (e.g. E_NOTICE).
      *
      * @return string
      */
@@ -50,7 +50,7 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Renders FORM data
+     * Renders FORM data.
      *
      * @return string
      */
@@ -68,7 +68,7 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Renders URL parameters
+     * Renders URL parameters.
      *
      * @return string
      */
@@ -86,7 +86,7 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Renders session values
+     * Renders session values.
      *
      * @return string
      */
@@ -128,9 +128,10 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Renders a value
+     * Renders a value.
      *
      * @param $value
+     *
      * @return string
      */
     protected function renderValue($value)
@@ -219,11 +220,19 @@ EOF;
         return "\n\r\n\r";
     }
 
+    /**
+     * @return array|Collection
+     */
     private function session()
     {
-        return $this->request->hasSession() ? $this->request->session()->all() : collect();
+        return $this->request->hasSession()
+            ? $this->request->session()->all()
+            : collect();
     }
 
+    /**
+     * @return mixed
+     */
     private function user()
     {
         return $this->request->user();

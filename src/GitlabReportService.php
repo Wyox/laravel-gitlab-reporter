@@ -63,7 +63,9 @@ class GitlabReportService
 
 
     /**
-     * GitlabReport function to report exceptions. This will generate a GitlabReport and send it to GitLab as issue under the project
+     * GitlabReport function to report exceptions.
+     * This will generate a GitlabReport and send it to GitLab as issue under the project.
+     *
      * @param Exception $exception
      * @throws Exception
      */
@@ -112,7 +114,9 @@ class GitlabReportService
 
     /**
      * Returns the right reporter class based on the exception given
+     *
      * @param Exception $exception
+     *
      * @return mixed|string
      */
     private function reporter(Exception $exception)
@@ -131,6 +135,7 @@ class GitlabReportService
 
     /**
      * Returns the current Request
+     *
      * @return Request
      */
     private function request()
@@ -141,18 +146,29 @@ class GitlabReportService
 
     /**
      * Returns if the exception is ignored based on the configuration
+     *
      * @param Exception $exception
      * @return bool
      */
     private function isIgnored(Exception $exception)
     {
-        $ignored = array_filter($this->config['ignore-exceptions'], function ($class) use ($exception) {
-            return is_a($exception, $class);
-        });
+        $ignored = array_filter(
+            $this->config['ignore-exceptions'],
+            function ($class) use ($exception) {
+                return is_a($exception, $class);
+            }
+        );
 
         return count($ignored) > 0;
     }
 
+    /**
+     * Checks if the exception should be reported to Gitlab
+     *
+     * @param Exception $exception
+     *
+     * @return bool
+     */
     private function canReport(Exception $exception)
     {
         return !$this->isIgnored($exception);
@@ -160,8 +176,10 @@ class GitlabReportService
 
 
     /**
-     * Redacts a request object. (This ensures reports won't know anything about this either)
+     * Hides any sensitive information in a request object.
+     *
      * @param Request $request
+     *
      * @return Request
      */
     private function redactRequest(Request $request)
@@ -178,7 +196,9 @@ class GitlabReportService
 
     /**
      * Redacts an array (recursive loop)
+     *
      * @param $array
+     *
      * @return mixed
      */
     private function redactArray($array)
@@ -198,8 +218,11 @@ class GitlabReportService
 
     /**
      * Simple redact function.
+     *
      * @param $key
+     *
      * @param $value
+     *
      * @return string
      */
     private function redact($key, $value)

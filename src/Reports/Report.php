@@ -23,7 +23,8 @@ abstract class Report
     }
 
     /**
-     * This returns a unique signature based on the exception, the query and input parameters
+     * This returns a unique signature based on the exception,
+     * the query and input parameters.
      *
      * @return string
      */
@@ -41,7 +42,7 @@ abstract class Report
     }
 
     /**
-     * Returns description "rendered"
+     * Returns description "rendered".
      *
      * @return string
      */
@@ -52,7 +53,7 @@ abstract class Report
     }
 
     /**
-     * Generates a GitLab issue title
+     * Generates a GitLab issue title.
      *
      * @return string
      */
@@ -62,21 +63,21 @@ abstract class Report
     }
 
     /**
-     * Returns the title of the issue
+     * Returns the title of the issue.
      *
      * @return string
      */
     abstract public function message();
 
     /**
-     * Returns the issue in markdown
+     * Returns the issue in markdown.
      *
      * @return string
      */
     abstract public function description();
 
     /**
-     * Should return the unique identifier for this issue
+     * Should return the unique identifier for this issue.
      *
      * @return string
      */
