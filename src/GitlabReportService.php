@@ -9,18 +9,18 @@
 namespace Wyox\GitlabReport;
 
 // Use default Request facade
-use Throwable;
 use Gitlab\Client;
 use Gitlab\Model\Project;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Throwable;
 use Wyox\GitlabReport\Reports\DatabaseReport;
 use Wyox\GitlabReport\Reports\ExceptionReport;
 use Wyox\GitlabReport\Reports\Report;
 
 /**
- * Class GitlabReportService
  * @package Wyox\GitlabReport
+ * Class GitlabReportService
  */
 class GitlabReportService
 {
@@ -42,11 +42,12 @@ class GitlabReportService
      * @var array
      */
     private $reporters = [
-        QueryException::class => DatabaseReport::class
+        QueryException::class => DatabaseReport::class,
     ];
 
     /**
      * GitlabReportService constructor.
+     *
      * @param $config
      */
 
@@ -88,7 +89,7 @@ class GitlabReportService
                 // Check if an issue exists with the same title and is currently open.
                 $issues = $project->issues([
                     'search' => $report->identifier(),
-                    'state' => 'opened'
+                    'state'  => 'opened',
                 ]);
 
 
@@ -96,8 +97,8 @@ class GitlabReportService
                     $issue = $project->createIssue(
                         $report->title(),
                         [
-                        'description' => $report->description(),
-                        'labels' => $this->labels
+                            'description' => $report->description(),
+                            'labels' => $this->labels
                         ]
                     );
                 }
@@ -107,12 +108,10 @@ class GitlabReportService
                 }
             }
         }
-
-        return;
     }
 
     /**
-     * Returns the right reporter class based on the exception given
+     * Returns the right reporter class based on the exception given.
      *
      * @param Throwable $exception
      *
@@ -133,7 +132,7 @@ class GitlabReportService
     }
 
     /**
-     * Returns the current Request
+     * Returns the current Request.
      *
      * @return Request
      */
@@ -144,9 +143,10 @@ class GitlabReportService
 
 
     /**
-     * Returns if the exception is ignored based on the configuration
+     * Returns if the exception is ignored based on the configuration.
      *
      * @param Throwable $exception
+     *
      * @return bool
      */
     private function isIgnored(Throwable $exception)
@@ -162,7 +162,7 @@ class GitlabReportService
     }
 
     /**
-     * Checks if the exception should be reported to Gitlab
+     * Checks if the exception should be reported to Gitlab.
      *
      * @param Throwable $exception
      *
@@ -194,7 +194,7 @@ class GitlabReportService
     }
 
     /**
-     * Redacts an array (recursive loop)
+     * Redacts an array (recursive loop).
      *
      * @param $array
      *
@@ -227,7 +227,7 @@ class GitlabReportService
     private function redact($key, $value)
     {
         if (in_array($key, $this->config['redacted-fields'], true)) {
-            return "[hidden]";
+            return '[hidden]';
         } else {
             return $value;
         }

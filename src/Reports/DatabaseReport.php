@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: ivodebruijn
- * Date: 04/07/2018
- * Time: 23:32
- */
 
 namespace Wyox\GitlabReport\Reports;
 
@@ -29,7 +23,7 @@ class DatabaseReport extends ExceptionReport
     public function description()
     {
         // Return html string in Gitlab flavoured markdown
-        return $this->renderSummary() . $this->renderIdentifier() . $this->renderSQL() . $this->renderUrl() . $this->renderForm() . $this->renderSession() . $this->renderException();
+        return $this->renderSummary().$this->renderIdentifier().$this->renderSQL().$this->renderUrl().$this->renderForm().$this->renderSession().$this->renderException();
     }
 
 
@@ -46,7 +40,7 @@ class DatabaseReport extends ExceptionReport
             '?',
             $this->exception->getBindings(),
             $this->exception->getSql()
-        ) . $this->newline();
+        ).$this->newline();
         $str .= "```" . $this->newline();
 
         return $str;

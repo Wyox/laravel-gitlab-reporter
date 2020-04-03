@@ -4,8 +4,6 @@ namespace Wyox\GitlabReport;
 
 /**
  * Class ServiceProvider
- *
- * @package Wyox\GitlabReport
  */
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -16,7 +14,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/../config/gitlab-report.php' => config_path('gitlab-report.php'),
+            __DIR__.'/../config/gitlab-report.php' => config_path('gitlab-report.php'),
         ], 'gitlab-report');
     }
 
@@ -25,20 +23,20 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/gitlab-report.php', 'gitlab-report');
+        $this->mergeConfigFrom(__DIR__.'/../config/gitlab-report.php', 'gitlab-report');
 
         $this->app->singleton(
             GitlabReportService::class,
             function ($app) {
                 $config = array_merge(
                     [
-                        'url' => null,
-                        'token' => null,
-                        'project_id' => null,
-                        'labels' => '',
+                        'url'               => null,
+                        'token'             => null,
+                        'project_id'        => null,
+                        'labels'            => '',
                         'ignore-exceptions' => [],
-                        'redacted-fields' => [],
-                        'debug' => false
+                        'redacted-fields'   => [],
+                        'debug'             => false,
                     ],
                     $app->make('config')->get('gitlab-report', [])
                 );

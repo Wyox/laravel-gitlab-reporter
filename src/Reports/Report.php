@@ -13,8 +13,9 @@ abstract class Report
 
     /**
      * Report constructor.
+     *
      * @param \Throwable $exception
-     * @param Request $request
+     * @param Request    $request
      */
     public function __construct(\Throwable $exception, Request $request)
     {
@@ -33,7 +34,7 @@ abstract class Report
     {
         // Signature should be unique to the error (ignore session for now)
         // Signature should be unique to the error (ignore session for now)
-        $key = $this->message() . $this->exception->getFile() . $this->exception->getTraceAsString() . $this->exception->getCode();
+        $key = $this->message().$this->exception->getFile().$this->exception->getTraceAsString().$this->exception->getCode();
         // This might fail if it has complex objects
         $key .= (new Collection($this->request->request->all()))->toJson();
         $key .= (new Collection($this->request->query->all()))->toJson();

@@ -6,8 +6,6 @@
 
 namespace Wyox\GitlabReport\Reports;
 
-use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
@@ -15,7 +13,7 @@ use Symfony\Component\VarDumper\Dumper\CliDumper;
 class ExceptionReport extends Report
 {
     /**
-     * Generates a description for the report
+     * Generates a description for the report.
      *
      * @return string
      */
@@ -28,12 +26,12 @@ class ExceptionReport extends Report
         // the markdown render engine changes in future versions.
         // For now it's a simple hack to get around EE requirements
         // for custom variables
-        return $this->renderSummary() .
-            $this->identifier() .
-            $this->renderUser() .
-            $this->renderUrl() .
-            $this->renderForm() .
-            $this->renderSession() .
+        return $this->renderSummary().
+            $this->identifier().
+            $this->renderUser().
+            $this->renderUrl().
+            $this->renderForm().
+            $this->renderSession().
             $this->renderException();
     }
 
@@ -57,12 +55,12 @@ class ExceptionReport extends Report
     protected function renderForm()
     {
         $str = "#### Post Params\n\n";
-        $str .= "<details>";
+        $str .= '<details>';
         $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
         $str .= "```php\n";
         $str .= $this->renderValue((new Collection($this->request->request->all())));
         $str .= "```\n\n";
-        $str .= "</details>";
+        $str .= '</details>';
         $str .= $this->newline();
         return $str;
     }
@@ -75,12 +73,12 @@ class ExceptionReport extends Report
     protected function renderUrl()
     {
         $str = "#### Url Params\n\n";
-        $str .= "<details>";
+        $str .= '<details>';
         $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
         $str .= "```php\n";
         $str .= $this->renderValue((new Collection($this->request->query->all())));
         $str .= "```\n\n";
-        $str .= "</details>";
+        $str .= '</details>';
         $str .= $this->newline();
         return $str;
     }
@@ -93,12 +91,12 @@ class ExceptionReport extends Report
     protected function renderSession()
     {
         $str = "#### Session Params\n\n";
-        $str .= "<details>";
+        $str .= '<details>';
         $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
         $str .= "```php\n";
         $str .= $this->renderValue($this->session());
         $str .= "```\n\n";
-        $str .= "</details>";
+        $str .= '</details>';
         $str .= $this->newline();
 
         return $str;
@@ -111,16 +109,16 @@ class ExceptionReport extends Report
     {
         if (!empty($this->user)) {
             $str = "#### User \n\n";
-            $str .= "<details>";
+            $str .= '<details>';
             $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
             $str .= "```php\n";
             $str .= $this->renderValue($this->user());
             $str .= "```\n\n";
-            $str .= "</details>";
+            $str .= '</details>';
             $str .= $this->newline();
         } else {
             $str = "#### User \n\n";
-            $str .= "```Unauthenticated```";
+            $str .= '```Unauthenticated```';
             $str .= $this->newline();
         }
 
@@ -146,7 +144,7 @@ class ExceptionReport extends Report
                 // A negative depth means "end of dump"
                 if ($depth >= 0) {
                     // Adds a two spaces indentation to the line
-                    $output .= str_repeat('  ', $depth) . $line . "\n";
+                    $output .= str_repeat('  ', $depth).$line."\n";
                 }
             }
         );
@@ -155,7 +153,7 @@ class ExceptionReport extends Report
     }
 
     /**
-     * Renders the top summary of an issue with simple information
+     * Renders the top summary of an issue with simple information.
      *
      * @return string
      */
@@ -181,7 +179,7 @@ EOF;
     }
 
     /**
-     * Renders exception message in Markdown format
+     * Renders exception message in Markdown format.
      *
      * @return string
      */
@@ -198,7 +196,7 @@ EOF;
     }
 
     /**
-     * Renders the identifier which will be used to find issues in a project
+     * Renders the identifier which will be used to find issues in a project.
      *
      * @return string
      */
@@ -211,7 +209,7 @@ EOF;
     }
 
     /**
-     * Helper function, real newline is double newline in Markdown
+     * Helper function, real newline is double newline in Markdown.
      *
      * @return string
      */
