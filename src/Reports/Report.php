@@ -13,10 +13,10 @@ abstract class Report
 
     /**
      * Report constructor.
-     * @param \Exception $exception
+     * @param \Throwable $exception
      * @param Request $request
      */
-    public function __construct(\Exception $exception, Request $request)
+    public function __construct(\Throwable $exception, Request $request)
     {
         $this->exception = $exception;
         $this->request = $request;

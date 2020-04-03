@@ -9,7 +9,7 @@
 namespace Wyox\GitlabReport;
 
 // Use default Request facade
-use Exception;
+use Throwable;
 use Gitlab\Client;
 use Gitlab\Model\Project;
 use Illuminate\Database\QueryException;
@@ -61,15 +61,14 @@ class GitlabReportService
         return $this;
     }
 
-
     /**
      * GitlabReport function to report exceptions.
      * This will generate a GitlabReport and send it to GitLab as issue under the project.
      *
-     * @param Exception $exception
-     * @throws Exception
+     * @param Throwable $exception
+     * @throws Throwable
      */
-    public function report(Exception $exception)
+    public function report(Throwable $exception)
     {
         if ($this->canReport($exception) && !empty($this->client)) {
             try {
@@ -102,7 +101,7 @@ class GitlabReportService
                         ]
                     );
                 }
-            } catch (Exception $exp) {
+            } catch (Throwable $exp) {
                 if ($this->config['debug']) {
                     throw $exp;
                 }
@@ -115,11 +114,11 @@ class GitlabReportService
     /**
      * Returns the right reporter class based on the exception given
      *
-     * @param Exception $exception
+     * @param Throwable $exception
      *
      * @return mixed|string
      */
-    private function reporter(Exception $exception)
+    private function reporter(Throwable $exception)
     {
         // Set default class
         $rc = ExceptionReport::class;
@@ -147,10 +146,10 @@ class GitlabReportService
     /**
      * Returns if the exception is ignored based on the configuration
      *
-     * @param Exception $exception
+     * @param Throwable $exception
      * @return bool
      */
-    private function isIgnored(Exception $exception)
+    private function isIgnored(Throwable $exception)
     {
         $ignored = array_filter(
             $this->config['ignore-exceptions'],
@@ -165,11 +164,11 @@ class GitlabReportService
     /**
      * Checks if the exception should be reported to Gitlab
      *
-     * @param Exception $exception
+     * @param Throwable $exception
      *
      * @return bool
      */
-    private function canReport(Exception $exception)
+    private function canReport(Throwable $exception)
     {
         return !$this->isIgnored($exception);
     }
