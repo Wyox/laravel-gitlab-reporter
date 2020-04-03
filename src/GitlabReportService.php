@@ -39,7 +39,6 @@ class GitlabReportService
      *
      * @param $config
      */
-
     public function __construct($config)
     {
         if (!empty($config['url']) && !empty($config['token'])) {
