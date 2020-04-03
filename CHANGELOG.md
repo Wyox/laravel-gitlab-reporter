@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Add proper support for Laravel 7 by replacing Exception with Throwable
+
+## 1.0.1
+
+- Add support for Laravel 7
+
 ## 1.0.0
 
 - Update requirements to PHP 7.1
