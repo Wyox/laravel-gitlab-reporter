@@ -58,6 +58,7 @@ class ExceptionReport extends Report
         $str .= "```\n\n";
         $str .= '</details>';
         $str .= $this->newline();
+
         return $str;
     }
 
@@ -76,6 +77,7 @@ class ExceptionReport extends Report
         $str .= "```\n\n";
         $str .= '</details>';
         $str .= $this->newline();
+
         return $str;
     }
 

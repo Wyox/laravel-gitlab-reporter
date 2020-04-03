@@ -25,7 +25,6 @@ class DatabaseReport extends ExceptionReport
         return $this->renderSummary().$this->renderIdentifier().$this->renderSQL().$this->renderUrl().$this->renderForm().$this->renderSession().$this->renderException();
     }
 
-
     /**
      * Renders Queries.
      *

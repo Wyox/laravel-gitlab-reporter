@@ -27,7 +27,6 @@ class GitlabReportService
      */
     private $labels;
 
-
     /**
      * @var array
      */
@@ -57,6 +56,7 @@ class GitlabReportService
      * This will generate a GitlabReport and send it to GitLab as issue under the project.
      *
      * @param Throwable $exception
+     *
      * @throws Throwable
      */
     public function report(Throwable $exception)
@@ -75,20 +75,18 @@ class GitlabReportService
 
                 $project = new Project($this->config['project_id'], $this->client);
 
-
                 // Check if an issue exists with the same title and is currently open.
                 $issues = $project->issues([
                     'search' => $report->identifier(),
                     'state'  => 'opened',
                 ]);
 
-
                 if (empty($issues)) {
                     $issue = $project->createIssue(
                         $report->title(),
                         [
                             'description' => $report->description(),
-                            'labels'      => $this->labels
+                            'labels'      => $this->labels,
                         ]
                     );
                 }
@@ -131,7 +129,6 @@ class GitlabReportService
         return app(Request::class);
     }
 
-
     /**
      * Returns if the exception is ignored based on the configuration.
      *
@@ -162,7 +159,6 @@ class GitlabReportService
     {
         return !$this->isIgnored($exception);
     }
-
 
     /**
      * Hides any sensitive information in a request object.
@@ -209,7 +205,6 @@ class GitlabReportService
      * Simple redact function.
      *
      * @param $key
-     *
      * @param $value
      *
      * @return string

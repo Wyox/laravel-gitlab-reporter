@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Wyox\GitlabReport\Reports;
 
 use Illuminate\Http\Request;
@@ -29,7 +28,6 @@ abstract class Report
      *
      * @return string
      */
-
     public function signature()
     {
         // Signature should be unique to the error (ignore session for now)

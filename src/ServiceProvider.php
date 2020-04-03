@@ -7,7 +7,6 @@ namespace Wyox\GitlabReport;
  */
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
-
     /**
      * @return void
      */
