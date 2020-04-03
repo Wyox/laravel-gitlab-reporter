@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: ivodebruijn
- * Date: 20/09/2017
- * Time: 20:42
- */
 
 namespace Wyox\GitlabReport;
 
@@ -18,10 +12,6 @@ use Wyox\GitlabReport\Reports\DatabaseReport;
 use Wyox\GitlabReport\Reports\ExceptionReport;
 use Wyox\GitlabReport\Reports\Report;
 
-/**
- * @package Wyox\GitlabReport
- * Class GitlabReportService
- */
 class GitlabReportService
 {
     /**
@@ -98,7 +88,7 @@ class GitlabReportService
                         $report->title(),
                         [
                             'description' => $report->description(),
-                            'labels' => $this->labels
+                            'labels'      => $this->labels
                         ]
                     );
                 }

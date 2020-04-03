@@ -1,8 +1,4 @@
 <?php
-/**
- *
- * @author Ivo de Bruijn <ivo@idobits.nl>
- */
 
 namespace Wyox\GitlabReport\Reports;
 
@@ -161,7 +157,7 @@ class ExceptionReport extends Report
     {
         $exception = get_class($this->exception);
         $authenticatedUser = $this->user();
-        $isAuthenticated = !empty($authenticatedUser) ? "Yes" : "No";
+        $isAuthenticated = !empty($authenticatedUser) ? 'Yes' : 'No';
 
         return <<<EOF
 #### Error summary

@@ -7,12 +7,11 @@ use Illuminate\Support\Str;
 class DatabaseReport extends ExceptionReport
 {
     /**
-     *
      * @return string
      */
     public function title()
     {
-        return "DATABASE: " . $this->message();
+        return 'DATABASE: '.$this->message();
     }
 
     /**
@@ -41,7 +40,7 @@ class DatabaseReport extends ExceptionReport
             $this->exception->getBindings(),
             $this->exception->getSql()
         ).$this->newline();
-        $str .= "```" . $this->newline();
+        $str .= '```'.$this->newline();
 
         return $str;
     }
