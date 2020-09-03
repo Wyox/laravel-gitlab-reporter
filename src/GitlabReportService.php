@@ -58,7 +58,7 @@ class GitlabReportService
      *
      * @throws Throwable
      */
-    public function report(Throwable $exception)
+    public function report(Throwable $exception, array $custom_labels = null)
     {
         if ($this->canReport($exception) && !empty($this->client)) {
             try {
@@ -77,15 +77,21 @@ class GitlabReportService
                 // Check if an issue exists with the same title and is currently open.
                 $issues = $project->issues([
                     'search' => $report->identifier(),
-                    'state'  => 'opened',
+                    'state' => 'opened',
                 ]);
+
+                if (!$custom_labels) {
+                    $labels = $this->labels;
+                } else {
+                    $labels = $custom_labels;
+                }
 
                 if (empty($issues)) {
                     $issue = $project->createIssue(
                         $report->title(),
                         [
                             'description' => $report->description(),
-                            'labels'      => $this->labels,
+                            'labels' => $labels,
                         ]
                     );
                 }
