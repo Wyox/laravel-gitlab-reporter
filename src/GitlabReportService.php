@@ -18,12 +18,14 @@ class GitlabReportService
      * @var Gitlab\Client
      */
     private $client;
+
     /**
      * @var string Configuration for the reporter
      */
     private $config;
+
     /**
-     * @var string Contains all the labels applied to an issue
+     * @var array Contains all the labels applied to an issue
      */
     private $labels;
 
@@ -45,6 +47,10 @@ class GitlabReportService
             $this->client = Client::create($config['url'])->authenticate($config['token'], Client::AUTH_URL_TOKEN);
         }
 
+        if(!empty($config['labels'])){
+            $this->labels = $config['labels'];
+        }
+
         $this->config = $config;
 
         return $this;
@@ -55,14 +61,14 @@ class GitlabReportService
      * This will generate a GitlabReport and send it to GitLab as issue under the project.
      *
      * @param Throwable $exception
+     * @param array|null $labels
      *
      * @throws Throwable
      */
-    public function report(Throwable $exception)
+    public function report(Throwable $exception, array $labels = null)
     {
         if ($this->canReport($exception) && !empty($this->client)) {
             try {
-
                 // Get current request
                 $request = $this->redactRequest($this->request());
 
@@ -80,12 +86,16 @@ class GitlabReportService
                     'state'  => 'opened',
                 ]);
 
+                if (!$labels) {
+                    $labels = $this->labels;
+                }
+
                 if (empty($issues)) {
-                    $issue = $project->createIssue(
+                    $project->createIssue(
                         $report->title(),
                         [
                             'description' => $report->description(),
-                            'labels'      => $this->labels,
+                            'labels'      => is_array($labels) ? implode(',', $labels) : $labels,
                         ]
                     );
                 }

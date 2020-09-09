@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- Fix labels not being applied from configuration
+- Add support for Laravel 8
+- Ability to add labels when reporting (thanks menkaff!)
+
 ## 1.1.0
 
 - Add proper support for Laravel 7 by replacing Exception with Throwable
