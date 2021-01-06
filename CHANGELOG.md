@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+- Remove debug `dump()` when an internal exception occurred.
+
 ## 1.1.3
 
 - Update packages dependencies

@@ -104,8 +104,6 @@ class GitlabReportService
                     );
                 }
             } catch (Throwable $exp) {
-                dump("!");
-                die();
                 if ($this->config['debug']) {
                     throw $exp;
                 }
