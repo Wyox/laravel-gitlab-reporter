@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.3
+
+- Update packages dependencies
+- Remove deprecated usage of `Client::create()` and use `new Gitlab\Client()` instead.
+
+## 1.1.2
+
+- Update packages dependencies
+
 ## 1.1.1
 
 - Fix labels not being applied from configuration
