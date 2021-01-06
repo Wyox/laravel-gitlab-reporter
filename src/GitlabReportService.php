@@ -15,7 +15,7 @@ use Wyox\GitlabReport\Reports\Report;
 class GitlabReportService
 {
     /**
-     * @var Gitlab\Client
+     * @var Client $client
      */
     private $client;
 
@@ -43,11 +43,15 @@ class GitlabReportService
      */
     public function __construct($config)
     {
-        if (!empty($config['url']) && !empty($config['token'])) {
-            $this->client = Client::create($config['url'])->authenticate($config['token'], Client::AUTH_URL_TOKEN);
+        if (!empty($config['token'])) {
+            $this->client = new Client();
+            if (!empty($config['url'])) {
+                $this->client->setUrl($config['url']);
+            }
+            $this->client->authenticate($config['token'], Client::AUTH_HTTP_TOKEN);
         }
 
-        if(!empty($config['labels'])){
+        if (!empty($config['labels'])) {
             $this->labels = $config['labels'];
         }
 
@@ -100,6 +104,8 @@ class GitlabReportService
                     );
                 }
             } catch (Throwable $exp) {
+                dump("!");
+                die();
                 if ($this->config['debug']) {
                     throw $exp;
                 }
