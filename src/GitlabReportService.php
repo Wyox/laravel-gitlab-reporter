@@ -4,7 +4,6 @@ namespace Wyox\GitlabReport;
 
 // Use default Request facade
 use Gitlab\Client;
-use Gitlab\Model\Project;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Throwable;
@@ -82,22 +81,18 @@ class GitlabReportService
                 /** @var ExceptionReport $report */
                 $report = new $reporter($exception, $request);
 
-                $project = new Project($this->config['project_id'], $this->client);
-
                 // Check if an issue exists with the same title and is currently open.
-                $issues = $project->issues([
+                $issues = $this->client->issues()->all($this->config['project_id'], [
                     'search' => $report->identifier(),
                     'state'  => 'opened',
                 ]);
 
-                if (!$labels) {
-                    $labels = $this->labels;
-                }
+                $labels = $this->labels ?? '';
 
                 if (empty($issues)) {
-                    $project->createIssue(
-                        $report->title(),
+                    $this->client->issues()->create($this->config['project_id'],
                         [
+                            'title' => $report->title(),
                             'description' => $report->description(),
                             'labels'      => is_array($labels) ? implode(',', $labels) : $labels,
                         ]

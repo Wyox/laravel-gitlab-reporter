@@ -105,7 +105,7 @@ class ExceptionReport extends Report
      */
     protected function renderUser()
     {
-        if (!empty($this->user)) {
+        if (!empty($this->user())) {
             $str = "#### User \n\n";
             $str .= '<details>';
             $str .= "<summary>Click me to collapse/fold.</summary>\n\n";
