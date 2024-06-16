@@ -2,11 +2,14 @@
     "name": "wyox/laravel-gitlab-reporter",
     "description": "Creates Gitlab Issues when Exceptions are thrown",
     "type": "library",
-    "keywords": ["gitlab", "error reporting"],
-    "license" : "MIT",
+    "keywords": [
+        "gitlab",
+        "error reporting"
+    ],
+    "license": "MIT",
     "require": {
-        "php": ">=7.2",
-        "illuminate/support": ">=5.5|^6|^7|^8",
+        "php": ">=8.0",
+        "illuminate/support": "^9|^10|^11",
         "m4tthumphrey/php-gitlab-api": "^11.4",
         "guzzlehttp/guzzle": "^7.2",
         "http-interop/http-factory-guzzle": "^1.0"
@@ -17,7 +20,7 @@
             "email": "ik@ivodebruijn.nl"
         }
     ],
-    "autoload":{
+    "autoload": {
         "psr-4": {
             "Wyox\\GitlabReport\\": "src/"
         }
@@ -30,6 +33,11 @@
             "aliases": {
                 "GitlabReport": "Wyox\\GitlabReport\\Facade"
             }
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
         }
     }
 }

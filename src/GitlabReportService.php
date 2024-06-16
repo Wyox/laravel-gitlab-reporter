@@ -4,56 +4,45 @@ namespace Wyox\GitlabReport;
 
 // Use default Request facade
 use Gitlab\Client;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
-use Wyox\GitlabReport\Reports\DatabaseReport;
-use Wyox\GitlabReport\Reports\ExceptionReport;
-use Wyox\GitlabReport\Reports\Report;
+use Wyox\GitlabReport\Incidents\CommandIncident;
+use Wyox\GitlabReport\Incidents\Incident;
+use Wyox\GitlabReport\Incidents\RequestIncident;
 
 class GitlabReportService
 {
     /**
      * @var Client $client
      */
-    private $client;
+    private Client $client;
 
     /**
-     * @var string Configuration for the reporter
+     * @var array Configuration for the reporter
      */
-    private $config;
+    private array $config;
 
     /**
-     * @var array Contains all the labels applied to an issue
+     * @var string Contains all the labels applied to an issue
      */
-    private $labels;
+    private string $labels;
 
-    /**
-     * @var array
-     */
-    private $reporters = [
-        QueryException::class => DatabaseReport::class,
-    ];
 
     /**
      * GitlabReportService constructor.
      *
      * @param $config
      */
-    public function __construct($config)
+    public function __construct(array $config = [])
     {
-        if (!empty($config['token'])) {
+        if (!empty($config['token']) && !empty($config['url'])) {
             $this->client = new Client();
-            if (!empty($config['url'])) {
-                $this->client->setUrl($config['url']);
-            }
+            $this->client->setUrl($config['url']);
             $this->client->authenticate($config['token'], Client::AUTH_HTTP_TOKEN);
         }
 
-        if (!empty($config['labels'])) {
-            $this->labels = $config['labels'];
-        }
-
+        $this->labels = !empty($config['labels']) ? $config['labels'] : '';
         $this->config = $config;
 
         return $this;
@@ -64,96 +53,29 @@ class GitlabReportService
      * This will generate a GitlabReport and send it to GitLab as issue under the project.
      *
      * @param Throwable $exception
-     * @param array|null $labels
      *
      * @throws Throwable
      */
-    public function report(Throwable $exception, array $labels = null)
+    public function report(Throwable $exception): void
     {
-        if ($this->canReport($exception) && !empty($this->client)) {
-            try {
-                // Get current request
-                $request = $this->redactRequest($this->request());
+        try {
+            // Can we report this exception?
+            if ($this->canReport($exception)) {
+                /**
+                 * @var Incident $incident
+                 */
+                $incident = app()->runningInConsole()
+                    ? new CommandIncident($exception, $_SERVER['argv'])
+                    : new RequestIncident($exception, $this->redactRequest($this->request()));
 
-                // Get the proper reporter
-                $reporter = $this->reporter($exception);
-
-                /** @var ExceptionReport $report */
-                $report = new $reporter($exception, $request);
-
-                // Check if an issue exists with the same title and is currently open.
-                $issues = $this->client->issues()->all($this->config['project_id'], [
-                    'search' => $report->identifier(),
-                    'state'  => 'opened',
-                ]);
-
-                $labels = $this->labels ?? '';
-
-                if (empty($issues)) {
-                    $this->client->issues()->create($this->config['project_id'],
-                        [
-                            'title' => $report->title(),
-                            'description' => $report->description(),
-                            'labels'      => is_array($labels) ? implode(',', $labels) : $labels,
-                        ]
-                    );
-                }
-            } catch (Throwable $exp) {
-                if ($this->config['debug']) {
-                    throw $exp;
-                }
+                // Report incident
+                $this->reportIncident($incident);
+            }
+        } catch (Throwable $e) {
+            if ($this->config['debug']) {
+                dump($e);
             }
         }
-    }
-
-    /**
-     * Returns the right reporter class based on the exception given.
-     *
-     * @param Throwable $exception
-     *
-     * @return mixed|string
-     */
-    private function reporter(Throwable $exception)
-    {
-        // Set default class
-        $rc = ExceptionReport::class;
-
-        foreach ($this->reporters as $key => $reporter) {
-            if (is_a($exception, $key) && is_a(Report::class, $reporter)) {
-                $rc = $reporter;
-            }
-        }
-
-        return $rc;
-    }
-
-    /**
-     * Returns the current Request.
-     *
-     * @return Request
-     */
-    private function request()
-    {
-        return app(Request::class);
-    }
-
-    /**
-     * Returns if the exception is ignored based on the configuration.
-     *
-     * @param Throwable $exception
-     *
-     * @return bool
-     */
-    private function isIgnored(Throwable $exception)
-    {
-        $ignored = array_filter(
-            $this->config['ignore-exceptions'],
-            function ($class) use ($exception) {
-                return is_a($exception, $class);
-            }
-        );
-
-        return count($ignored) > 0;
     }
 
     /**
@@ -169,13 +91,32 @@ class GitlabReportService
     }
 
     /**
+     * Returns if the exception is ignored based on the configuration.
+     *
+     * @param Throwable $exception
+     *
+     * @return bool
+     */
+    private function isIgnored(Throwable $exception)
+    {
+        $ignored = array_filter(
+            $this->config['ignore-exceptions'] ?? [],
+            function ($class) use ($exception) {
+                return is_a($exception, $class);
+            }
+        );
+
+        return count($ignored) > 0;
+    }
+
+    /**
      * Hides any sensitive information in a request object.
      *
      * @param Request $request
      *
      * @return Request
      */
-    private function redactRequest(Request $request)
+    private function redactRequest(Request $request): Request
     {
         $request->query->replace($this->redactArray($request->query->all()));
         $request->request->replace($this->redactArray($request->request->all()));
@@ -194,7 +135,7 @@ class GitlabReportService
      *
      * @return mixed
      */
-    private function redactArray($array)
+    private function redactArray($array): mixed
     {
         foreach ($array as $key => $value) {
             if (is_array($array[$key])) {
@@ -217,12 +158,85 @@ class GitlabReportService
      *
      * @return string
      */
-    private function redact($key, $value)
+    private function redact($key, $value): string
     {
-        if (in_array($key, $this->config['redacted-fields'], true)) {
-            return '[hidden]';
-        } else {
-            return $value;
+        // Redact is the field name is in redacted-fields
+        return in_array($key, $this->config['redacted-fields'], true)
+            ? '[redacted]'
+            : $value;
+    }
+
+    /**
+     * Returns the current Request.
+     *
+     * @return Request
+     */
+    private function request(): Request
+    {
+        return app(Request::class);
+    }
+
+    /**
+     * Internal report incident
+     * @param Incident $incident
+     * @return void
+     */
+    private function reportIncident(Incident $incident): void
+    {
+        // Check if the incident exists in our Gitlab environment
+        if (!$this->incidentExists($incident)) {
+            $this->reportToGitlab($incident);
+        }
+    }
+
+    /**
+     * Check if incident exists in Gitlab
+     * @param Incident $incident
+     * @return bool
+     */
+    private function incidentExists(Incident $incident): bool
+    {
+        if (Cache::has('gitlab_reporter_' . $incident->hash()) && $this->config['cache']) {
+            return true;
+        }
+
+        // Search for issues in gitlab with the exact unique hash from the incident
+        $issues = $this->client->issues()->all($this->config['project_id'], [
+            'search' => $incident->hash(),
+            'state' => 'opened',
+        ]);
+
+        $exists = !empty($issues);
+
+        // Found it, lets cache it so we don't have to search it again...
+        if ($exists && $this->config['cache']) {
+            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60*15);
+        }
+
+
+        return $exists;
+    }
+
+    /**
+     * Create issue in Gitlab
+     * @param Incident $incident
+     * @return void
+     */
+    private function reportToGitlab(Incident $incident): void
+    {
+        $labels = $this->labels;
+        $this->client->issues()->create(
+            $this->config['project_id'],
+            [
+                'title' => $incident->title(),
+                'description' => $incident->markdown(),
+                'issue_type' => 'incident',
+                'labels' => is_array($labels) ? implode(',', $labels) : $labels,
+            ]
+        );
+
+        if ($this->config['cache']) {
+            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60*15);
         }
     }
 }
