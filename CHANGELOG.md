@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0-dev
+
+- Change minimal requirements to Laravel 9 and higher and PHP 8.0
+- Upgrade dependencies related to the change above
+- Add migration guide for 1.x.x to 2.0.0
+- Use local caching, so we don't have to query the server everytime an Exception occurs (can be configured in the config)
+- Generate markdown for Gitlab issues in a different way
+- Distinguish between http requests and cli commands (issue will look different too)
+- Reduce output from Query params, POST, Session and User as a lot of additional but not useful data was put into the issue description
+
 ## 1.1.4
 
 - Remove debug `dump()` when an internal exception occurred.
@@ -43,12 +53,14 @@ Updated readme to reflect a production environment where the config is cached an
 - Update readme to change env('APP_ENV') entry to config('app.env') for production environments
 
 ## 0.0.6
+
 - Added support for Laravel 5.8
 
 ## 0.0.5
+
 - Ability to add labels to a ticket
 
-
 ## 0.0.1
+
 - Initial release
 
