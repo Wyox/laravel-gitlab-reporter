@@ -40,9 +40,10 @@ GITLAB_REPORT_URL=https://gitlab.com/
 GITLAB_REPORT_TOKEN=
 GITLAB_REPORT_PROJECT_ID=
 GITLAB_REPORT_LABELS=
+GITLAB_USE_CACHE=true
 ```
 
-I would suggest making a seperate user account for the reporter and only let it access Issues and allow it for issue
+I would suggest making a separate user account for the reporter and only let it access Issues and allow it for issue
 creation.
 This way you can ensure if your server or code gets compromised you won't give full access to the server
 
@@ -77,4 +78,4 @@ been added by default
 
 In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the
 configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced
-with [hidden]. Fields that are filled with null will also be replaced with [hidden]
+with [redacted]. Fields that are filled with null will also be replaced with [redacted]

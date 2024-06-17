@@ -57,6 +57,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             'labels' => '',
             'ignore-exceptions' => [],
             'redacted-fields' => [],
+            'cache' => true,
             'debug' => false,
         ];
     }
