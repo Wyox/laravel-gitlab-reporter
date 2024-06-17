@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0-dev
+## 2.0.0
 
 - Change minimal requirements to Laravel 9 and higher and PHP 8.0
 - Upgrade dependencies related to the change above
