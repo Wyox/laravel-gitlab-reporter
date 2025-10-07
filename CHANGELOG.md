@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.1
+- Upgrade dependencies
+- Upgrade to m4tthumphrey/php-gitlab-api 12.0.0
+
+
+## 2.1.0
+
+- Support latest laravel
+- Minimal php version is 8.1
+
 ## 2.0.0
 
 - Change minimal requirements to Laravel 9 and higher and PHP 8.0

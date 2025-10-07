@@ -58,6 +58,7 @@ class GitlabReportService
      */
     public function report(Throwable $exception): void
     {
+
         try {
             // Can we report this exception?
             if ($this->canReport($exception)) {
@@ -210,7 +211,7 @@ class GitlabReportService
 
         // Found it, lets cache it so we don't have to search it again...
         if ($exists && $this->config['cache']) {
-            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60*15);
+            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60 * 15);
         }
 
 
@@ -236,7 +237,7 @@ class GitlabReportService
         );
 
         if ($this->config['cache']) {
-            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60*15);
+            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60 * 15);
         }
     }
 }
