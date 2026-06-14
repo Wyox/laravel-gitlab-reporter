@@ -19,9 +19,9 @@ Install with composer
 composer require wyox/laravel-gitlab-reporter
 ```
 
-To use the Gitlab reporter you need to do the following with Laravel 11
+This package supports Laravel 11, 12 and 13 (PHP 8.2 or higher).
 
-Open your `bootstrap/app.php` and add the code shown below that is between the comment to the withExceptions closure
+To use the Gitlab reporter, open your `bootstrap/app.php` and add the code shown below between the comments to the withExceptions closure
 ```php 
     ->withExceptions(function (Exceptions $exceptions) {
         // ADD below
@@ -32,20 +32,6 @@ Open your `bootstrap/app.php` and add the code shown below that is between the c
         });
         // ADD Above
     })
-```
-
-For Laravel 9, 10 use you should change the following in your `app/Exceptions/Handler.php` file in your Laravel
-project
-
-```php
-public function register()
-{
-    $this->reportable(function (Throwable $e) {
-        if (app()->bound('gitlab.report') && $this->shouldReport($e)) {
-            app('gitlab.report')->report($e);
-        }
-    });
-}
 ```
 
 Now setup your .env file to include the following variables:
