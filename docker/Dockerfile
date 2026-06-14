@@ -21,6 +21,8 @@ ARG PHPUNIT_VERSION=11.*
 COPY composer.json ./
 
 RUN composer config --no-plugins allow-plugins.php-http/discovery true && \
+    composer config --no-plugins policy.advisories.block false && \
+    composer config --no-plugins audit.abandoned ignore && \
     composer require "illuminate/support:^${LARAVEL_VERSION}" \
         "orchestra/testbench:${TESTBENCH_VERSION}" \
         "phpunit/phpunit:${PHPUNIT_VERSION}" \
