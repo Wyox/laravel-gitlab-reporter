@@ -9,15 +9,15 @@
     "license": "MIT",
     "require": {
         "php": ">=8.2",
-        "illuminate/support": "^11|^12|^13",
-        "m4tthumphrey/php-gitlab-api": "^12.0",
-        "guzzlehttp/guzzle": "^7.2",
-        "http-interop/http-factory-guzzle": "^1.0"
+        "illuminate/support": "^12|^13",
+        "m4tthumphrey/php-gitlab-api": "^12.1",
+        "guzzlehttp/guzzle": "^7.11",
+        "http-interop/http-factory-guzzle": "^1.2"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "orchestra/testbench": "^10.0|^11.0",
         "phpunit/phpunit": "^11.0|^12.0|^13.0",
-        "mockery/mockery": "^1.5"
+        "mockery/mockery": "^1.6"
     },
     "authors": [
         {

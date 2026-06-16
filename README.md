@@ -19,7 +19,7 @@ Install with composer
 composer require wyox/laravel-gitlab-reporter
 ```
 
-This package supports Laravel 11, 12 and 13 (PHP 8.2 or higher).
+This package supports Laravel 12 and 13 (PHP 8.2 or higher).
 
 To use the Gitlab reporter, open your `bootstrap/app.php` and add the code shown below between the comments to the withExceptions closure
 ```php 
