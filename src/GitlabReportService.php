@@ -152,17 +152,20 @@ class GitlabReportService
     }
 
     /**
-     * Simple redact function.
+     * Simple redact function. Matching is case-insensitive so that fields such
+     * as `Authorization` or `API_KEY` are caught regardless of their casing.
      *
      * @param $key
      * @param $value
      *
-     * @return string
+     * @return mixed
      */
-    private function redact($key, $value): string
+    private function redact($key, $value): mixed
     {
-        // Redact is the field name is in redacted-fields
-        return in_array($key, $this->config['redacted-fields'], true)
+        $fields = array_map('strtolower', $this->config['redacted-fields'] ?? []);
+
+        // Redact if the field name is in redacted-fields
+        return in_array(strtolower((string) $key), $fields, true)
             ? '[redacted]'
             : $value;
     }
@@ -178,44 +181,49 @@ class GitlabReportService
     }
 
     /**
-     * Internal report incident
+     * Internal report incident.
+     *
+     * When an open issue for this incident already exists we leave a short
+     * "occurred again" note instead of silently dropping the occurrence, so a
+     * human can see how often a bug keeps happening. The local cache throttles
+     * both creation and these recurrence notes so we never spam GitLab.
+     *
      * @param Incident $incident
      * @return void
      */
     private function reportIncident(Incident $incident): void
     {
-        // Check if the incident exists in our Gitlab environment
-        if (!$this->incidentExists($incident)) {
-            $this->reportToGitlab($incident);
+        $cacheKey = 'gitlab_reporter_' . $incident->hash();
+
+        // Throttled: we already touched GitLab for this incident recently.
+        if ($this->config['cache'] && Cache::has($cacheKey)) {
+            return;
+        }
+
+        $existing = $this->findOpenIssue($incident);
+
+        if ($existing === null) {
+            $this->createIssue($incident);
+        } else {
+            $this->commentRecurrence($incident, $existing);
         }
     }
 
     /**
-     * Check if incident exists in Gitlab
+     * Find an open issue in Gitlab matching the incident's unique hash.
+     *
      * @param Incident $incident
-     * @return bool
+     * @return array|null
      */
-    private function incidentExists(Incident $incident): bool
+    private function findOpenIssue(Incident $incident): ?array
     {
-        if (Cache::has('gitlab_reporter_' . $incident->hash()) && $this->config['cache']) {
-            return true;
-        }
-
         // Search for issues in gitlab with the exact unique hash from the incident
         $issues = $this->client->issues()->all($this->config['project_id'], [
             'search' => $incident->hash(),
             'state' => 'opened',
         ]);
 
-        $exists = !empty($issues);
-
-        // Found it, lets cache it so we don't have to search it again...
-        if ($exists && $this->config['cache']) {
-            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60 * 15);
-        }
-
-
-        return $exists;
+        return $issues[0] ?? null;
     }
 
     /**
@@ -223,10 +231,10 @@ class GitlabReportService
      * @param Incident $incident
      * @return void
      */
-    private function reportToGitlab(Incident $incident): void
+    private function createIssue(Incident $incident): void
     {
         $labels = $this->labels;
-        $this->client->issues()->create(
+        $issue = $this->client->issues()->create(
             $this->config['project_id'],
             [
                 'title' => $incident->title(),
@@ -236,8 +244,57 @@ class GitlabReportService
             ]
         );
 
+        $this->remember($incident, $issue['iid'] ?? null);
+    }
+
+    /**
+     * Leave a note on an existing open issue noting that the error happened again.
+     *
+     * @param Incident $incident
+     * @param array $issue
+     * @return void
+     */
+    private function commentRecurrence(Incident $incident, array $issue): void
+    {
+        $iid = $issue['iid'] ?? null;
+
+        if ($iid !== null) {
+            $this->client->issues()->addNote(
+                $this->config['project_id'],
+                $iid,
+                $this->recurrenceNote()
+            );
+        }
+
+        $this->remember($incident, $iid);
+    }
+
+    /**
+     * Build the body for a recurrence note.
+     *
+     * @return string
+     */
+    private function recurrenceNote(): string
+    {
+        $environment = function_exists('app') && method_exists(app(), 'environment')
+            ? (string) app()->environment()
+            : 'unknown';
+
+        return "♻️ This error occurred again at `" . date('c') . "` (environment: `{$environment}`).";
+    }
+
+    /**
+     * Remember that we touched GitLab for this incident so we throttle the next
+     * occurrences within the cache window.
+     *
+     * @param Incident $incident
+     * @param int|null $iid
+     * @return void
+     */
+    private function remember(Incident $incident, ?int $iid): void
+    {
         if ($this->config['cache']) {
-            Cache::put('gitlab_reporter_' . $incident->hash(), true, 60 * 15);
+            Cache::put('gitlab_reporter_' . $incident->hash(), $iid ?? true, 60 * 15);
         }
     }
 }

@@ -2,7 +2,9 @@
 
 namespace Wyox\GitlabReport\Incidents;
 
+use Wyox\GitlabReport\Components\CodeExcerptComponent;
 use Wyox\GitlabReport\Components\CommandSummaryComponent;
+use Wyox\GitlabReport\Components\ContextComponent;
 use Wyox\GitlabReport\Components\SQLComponent;
 use Wyox\GitlabReport\Components\TraceComponent;
 
@@ -18,13 +20,15 @@ class CommandIncident extends Incident
 
     public function signature(): string
     {
-        return "command_" . implode("_", $this->argv) . "_" . get_class($this->exception) . "_" . $this->exception->getMessage() . "_" . $this->exception->getMessage() . $this->exception->getFile() . ":" . $this->exception->getLine();
+        return "command_" . implode("_", $this->argv) . "_" . get_class($this->exception) . "_" . $this->normalize($this->exception->getMessage()) . $this->exception->getFile() . ":" . $this->exception->getLine();
     }
 
     public function components(): array
     {
         return [
             new CommandSummaryComponent($this),
+            new ContextComponent($this),
+            new CodeExcerptComponent($this),
             new SQLComponent($this),
             new TraceComponent($this)
         ];

@@ -4,6 +4,8 @@ namespace Wyox\GitlabReport\Incidents;
 
 use Illuminate\Http\Request;
 use Throwable;
+use Wyox\GitlabReport\Components\CodeExcerptComponent;
+use Wyox\GitlabReport\Components\ContextComponent;
 use Wyox\GitlabReport\Components\RequestComponent;
 use Wyox\GitlabReport\Components\RequestSummaryComponent;
 use Wyox\GitlabReport\Components\SQLComponent;
@@ -21,13 +23,15 @@ class RequestIncident extends Incident
 
     public function signature(): string
     {
-        return "request_" . $this->request->getHttpHost() . "_" . $this->request->path() . "_" . get_class($this->exception) . "_" . $this->exception->getMessage() . $this->exception->getFile() . ":" . $this->exception->getLine();
+        return "request_" . $this->request->getHttpHost() . "_" . $this->request->path() . "_" . get_class($this->exception) . "_" . $this->normalize($this->exception->getMessage()) . $this->exception->getFile() . ":" . $this->exception->getLine();
     }
 
     public function components(): array
     {
         return [
             new RequestSummaryComponent($this),
+            new ContextComponent($this),
+            new CodeExcerptComponent($this),
             new SQLComponent($this),
             new RequestComponent($this),
             new TraceComponent($this)

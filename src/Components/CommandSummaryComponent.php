@@ -30,7 +30,7 @@ class CommandSummaryComponent extends MarkdownComponent
 |  Type     |  Value   |
 | :-------- | :------- |
 | Type of   | {$exceptionName} |
-| Message   | { $message } |
+| Message   | {$message} |
 | File      | {$exception->getFile()}:{$exception->getLine()} |
 | Command   | `{$commandName}` |
 | Arguments  | `{$arguments}` | Identifier: `{$this->incident->hash()}`

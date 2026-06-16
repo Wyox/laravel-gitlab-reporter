@@ -1,5 +1,33 @@
 # Changelog
 
+## 3.0.0
+
+### Breaking
+- Dropped Laravel 11 support; the package now targets Laravel 12 and 13 (PHP 8.2+).
+- Issue deduplication hashes changed. Exception messages are now normalized
+  (numbers, UUIDs and long hashes are masked) before hashing, so an error that
+  only differs by a dynamic id no longer creates a brand-new issue every time.
+  Existing open issues created by 2.x will not match the new hashes.
+
+### Fixed
+- Query parameters are now rendered in HTTP reports (the section previously
+  always showed "No Query parameters" due to an undefined variable).
+- Console (command) reports now show the exception message instead of the
+  literal text `{ $message }`.
+- Redacted, non-string scalar values (booleans, integers, null) keep their
+  original type instead of being coerced to a string.
+
+### Added
+- The full previous-exception chain (`getPrevious()`) is now rendered under a
+  "Caused by" section, including each cause's type, location and trace.
+- A "Code" section showing a source excerpt around the throwing line.
+- A "Context" section with environment, Laravel/PHP version, host, timestamp,
+  and (for HTTP requests) client IP and user agent.
+- Recurring errors now leave a throttled "occurred again" note on the existing
+  open issue instead of being silently dropped.
+- Redaction matching is now case-insensitive and the default redacted-field
+  list was expanded (tokens, secrets, authorization, api keys, etc.).
+
 ## 2.1.1
 - Upgrade dependencies
 - Upgrade to m4tthumphrey/php-gitlab-api 12.0.0

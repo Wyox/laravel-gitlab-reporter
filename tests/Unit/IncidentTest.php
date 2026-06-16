@@ -89,4 +89,36 @@ class IncidentTest extends TestCase
 
         $this->assertStringContainsString('Exception', $incident->title());
     }
+
+    public function test_dynamic_ids_in_message_collapse_to_same_hash(): void
+    {
+        // Both exceptions are created on the same line so file:line is identical;
+        // only the dynamic id in the message differs.
+        $make = fn (string $message) => new Exception($message);
+
+        $first = new CommandIncident($make('No query results for model [User] 12345'), ['artisan', 'test']);
+        $second = new CommandIncident($make('No query results for model [User] 67890'), ['artisan', 'test']);
+
+        $this->assertEquals($first->hash(), $second->hash());
+    }
+
+    public function test_uuid_in_message_collapse_to_same_hash(): void
+    {
+        $make = fn (string $message) => new Exception($message);
+
+        $first = new CommandIncident($make('Job 7b3f1c2a-8d4e-4f1a-9b2c-1a2b3c4d5e6f failed'), ['artisan', 'test']);
+        $second = new CommandIncident($make('Job 1c2d3e4f-5a6b-7c8d-9e0f-a1b2c3d4e5f6 failed'), ['artisan', 'test']);
+
+        $this->assertEquals($first->hash(), $second->hash());
+    }
+
+    public function test_genuinely_different_messages_keep_different_hashes(): void
+    {
+        $make = fn (string $message) => new Exception($message);
+
+        $first = new CommandIncident($make('Database connection refused'), ['artisan', 'test']);
+        $second = new CommandIncident($make('Permission denied for storage path'), ['artisan', 'test']);
+
+        $this->assertNotEquals($first->hash(), $second->hash());
+    }
 }

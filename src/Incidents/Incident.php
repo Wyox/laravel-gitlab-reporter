@@ -52,6 +52,29 @@ abstract class Incident
     }
 
     /**
+     * Normalizes a message for deduplication purposes so that the same logical
+     * error does not spawn a new issue every time a dynamic value (id, uuid,
+     * hash, ...) changes inside the exception message.
+     *
+     * @param string|null $value
+     *
+     * @return string
+     */
+    protected function normalize(?string $value): string
+    {
+        $value = $value ?? '';
+
+        // UUIDs
+        $value = preg_replace('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', '<uuid>', $value);
+        // Long hex sequences (hashes, tokens, object ids)
+        $value = preg_replace('/\b[0-9a-f]{16,}\b/i', '<hex>', $value);
+        // Any remaining number sequence
+        $value = preg_replace('/\d+/', '<n>', $value);
+
+        return $value;
+    }
+
+    /**
      * Must return a unique signature to this incident. This is based of the data available within the incident
      * @return string
      */

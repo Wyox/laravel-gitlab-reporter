@@ -24,12 +24,11 @@ class RequestComponent extends MarkdownComponent
         $query = $request->query->all();
 
         $str = "#### Query params\n\n";
-        if (empty($post)) {
+        if (empty($query)) {
             $str .= '*No Query parameters*';
             $str .= "\n\r\n\r";
             return $str;
         }
-
 
         $str .= '<details>';
         $str .= "<summary>Click me to collapse/fold.</summary>\n\n";

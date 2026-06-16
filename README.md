@@ -79,4 +79,23 @@ been added by default
 
 In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the
 configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced
-with [redacted]. Fields that are filled with null will also be replaced with [redacted]
+with [redacted]. Matching is case-insensitive, so `Authorization` and `authorization` are both redacted. A set of
+common sensitive field names (passwords, tokens, secrets, api keys, authorization, etc.) is redacted by default.
+
+# What's in a report
+
+Each issue description is built from a number of sections:
+
+- **Exception summary** - type, message, file/line and (for HTTP) the request method, URL and authentication state.
+- **Context** - environment, Laravel/PHP version, host, timestamp and (for HTTP) client IP and user agent.
+- **Code** - a source excerpt around the line that threw the exception.
+- **SQL** - the failing query (only for `QueryException`).
+- **Query params / POST / Session / User** - sanitized request data (HTTP only).
+- **Trace** - the stack trace, followed by a **Caused by** section for every previous exception in the chain.
+
+# Duplicate issues and recurrences
+
+Exceptions are deduplicated using a hash of the request/command, exception class and a normalized message
+(dynamic ids, UUIDs and hashes are masked) plus the file and line. When an open issue already exists for an
+exception, a throttled "occurred again" note is added to it instead of creating a duplicate. The throttling
+window is shared with the local cache (`GITLAB_USE_CACHE`).

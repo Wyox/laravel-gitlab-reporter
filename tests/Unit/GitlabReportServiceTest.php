@@ -42,4 +42,33 @@ class GitlabReportServiceTest extends TestCase
 
         $this->assertInstanceOf(GitlabReportService::class, $service);
     }
+
+    public function test_redaction_is_case_insensitive(): void
+    {
+        $service = new GitlabReportService([
+            'redacted-fields' => ['password', 'authorization'],
+        ]);
+
+        $redact = (new \ReflectionClass($service))->getMethod('redact');
+        $redact->setAccessible(true);
+
+        $this->assertEquals('[redacted]', $redact->invoke($service, 'Password', 'hunter2'));
+        $this->assertEquals('[redacted]', $redact->invoke($service, 'AUTHORIZATION', 'Bearer abc'));
+        $this->assertEquals('bob', $redact->invoke($service, 'username', 'bob'));
+    }
+
+    public function test_redaction_preserves_non_redacted_value_types(): void
+    {
+        $service = new GitlabReportService([
+            'redacted-fields' => ['password'],
+        ]);
+
+        $redact = (new \ReflectionClass($service))->getMethod('redact');
+        $redact->setAccessible(true);
+
+        // Non-redacted scalar values must keep their original type/value.
+        $this->assertSame(true, $redact->invoke($service, 'active', true));
+        $this->assertSame(42, $redact->invoke($service, 'count', 42));
+        $this->assertNull($redact->invoke($service, 'deleted_at', null));
+    }
 }
