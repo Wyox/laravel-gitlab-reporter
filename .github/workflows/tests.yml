@@ -4,29 +4,52 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
+  workflow_dispatch:
+  schedule:
+    # Weekly run to catch breakage from new Laravel / dependency releases
+    - cron: '0 6 * * 1'
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.2', '8.3', '8.4']
+        php: ['8.2', '8.3', '8.4', '8.5']
         laravel: ['12', '13']
-        stability: [prefer-stable]
+        stability: [prefer-lowest, prefer-stable]
+        experimental: [false]
         exclude:
           - php: '8.2'
             laravel: '13'
         include:
           - laravel: '12'
-            testbench: '10.*'
-            phpunit: '11.*'
+            illuminate: '^12.0'
+            testbench: '^10.0'
+            phpunit: '^11.5.3|^12.0'
           - laravel: '13'
-            testbench: '11.*'
-            phpunit: '12.*'
+            illuminate: '^13.0'
+            testbench: '^11.0'
+            phpunit: '^12.5.8|^13.0'
+          # Upcoming Laravel release, tested against the framework's development branch.
+          # Allowed to fail so it only gives an early warning.
+          - php: '8.4'
+            laravel: 'next'
+            illuminate: 'dev-master'
+            testbench: '12.x-dev'
+            phpunit: '^12.5.8|^13.0'
+            stability: prefer-stable
+            experimental: true
+          - php: '8.5'
+            laravel: 'next'
+            illuminate: 'dev-master'
+            testbench: '12.x-dev'
+            phpunit: '^12.5.8|^13.0'
+            stability: prefer-stable
+            experimental: true
 
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.stability }}
 
     steps:
       - uses: actions/checkout@v4
@@ -46,14 +69,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.laravel }}-${{ hashFiles('**/composer.json') }}
+          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.laravel }}-${{ matrix.stability }}-${{ hashFiles('**/composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.laravel }}-
+            ${{ runner.os }}-composer-${{ matrix.php }}-${{ matrix.laravel }}-${{ matrix.stability }}-
+
+      - name: Allow development dependencies
+        if: matrix.laravel == 'next'
+        run: |
+          composer config minimum-stability dev
+          composer config prefer-stable true
 
       - name: Install dependencies
         run: |
-          composer require "illuminate/support:^${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" --no-interaction --no-update
-          composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+          rm -f composer.lock
+          composer require "illuminate/support:${{ matrix.illuminate }}" --no-interaction --no-update
+          composer require "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" --dev --no-interaction --no-update
+          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: Show installed Laravel version
+        run: composer show laravel/framework | grep -E '^versions'
 
       - name: Execute tests
         run: vendor/bin/phpunit --colors=always

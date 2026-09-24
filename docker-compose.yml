@@ -1,12 +1,12 @@
 services:
-  laravel11-php82:
+  laravel12-php82:
     build:
       context: .
       dockerfile: docker/Dockerfile
       args:
         PHP_VERSION: "8.2"
-        LARAVEL_VERSION: "11"
-        TESTBENCH_VERSION: "9.*"
+        LARAVEL_VERSION: "12"
+        TESTBENCH_VERSION: "10.*"
         PHPUNIT_VERSION: "11.*"
 
   laravel12-php84:
@@ -25,6 +25,16 @@ services:
       dockerfile: docker/Dockerfile
       args:
         PHP_VERSION: "8.4"
+        LARAVEL_VERSION: "13"
+        TESTBENCH_VERSION: "11.*"
+        PHPUNIT_VERSION: "12.*"
+
+  laravel13-php85:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: "8.5"
         LARAVEL_VERSION: "13"
         TESTBENCH_VERSION: "11.*"
         PHPUNIT_VERSION: "12.*"

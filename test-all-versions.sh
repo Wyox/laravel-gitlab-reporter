@@ -7,7 +7,7 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-VERSIONS=("laravel11-php82" "laravel12-php84" "laravel13-php84")
+VERSIONS=("laravel12-php82" "laravel12-php84" "laravel13-php84" "laravel13-php85")
 FAILED=()
 PASSED=()
 
