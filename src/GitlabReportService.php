@@ -4,8 +4,14 @@ namespace Wyox\GitlabReport;
 
 // Use default Request facade
 use Gitlab\Client;
+use Gitlab\HttpClient\Builder;
+use Http\Client\Common\Plugin\RedirectPlugin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Throwable;
 use Wyox\GitlabReport\Incidents\CommandIncident;
 use Wyox\GitlabReport\Incidents\Incident;
@@ -13,6 +19,40 @@ use Wyox\GitlabReport\Incidents\RequestIncident;
 
 class GitlabReportService
 {
+    /**
+     * Field names that are always redacted, on top of the configured `redacted-fields`. `*` is a wildcard. Keys and
+     * patterns are compared case-insensitively with `_`, `-`, `.` and spaces removed, so `*token*` also covers
+     * `api_token`, `X-Auth-Token` and `accessToken`. Includes Laravel's own secrets: the CSRF token (`_token`) and the
+     * password hash AuthenticateSession keeps in the session (`password_hash_<guard>`).
+     */
+    public const REDACTED_FIELDS = [
+        '*password*',
+        '*passwd*',
+        'pass',
+        'pwd',
+        '*secret*',
+        '*token*',
+        '*api_key*',
+        'key',
+        'auth',
+        'authorization',
+        '*credential*',
+        'signature',
+        'code',
+        'otp',
+        'pin',
+        'jwt',
+        'cookie',
+        '*private_key*',
+        '*two_factor*',
+        '*recovery_code*',
+        '*credit_card*',
+        '*card_number*',
+        'cvv',
+        'cvc',
+        'ssn',
+    ];
+
     /**
      * @var Client $client
      */
@@ -38,7 +78,7 @@ class GitlabReportService
     public function __construct(array $config = [], ?Client $client = null)
     {
         if (!empty($config['token']) && !empty($config['url'])) {
-            $this->client = $client ?? new Client();
+            $this->client = $client ?? self::client(new Builder());
             $this->client->setUrl($config['url']);
             $this->client->authenticate($config['token'], Client::AUTH_HTTP_TOKEN);
         }
@@ -67,16 +107,41 @@ class GitlabReportService
                  * @var Incident $incident
                  */
                 $incident = app()->runningInConsole()
-                    ? new CommandIncident($exception, $_SERVER['argv'])
-                    : new RequestIncident($exception, $this->redactRequest($this->request()));
+                    ? new CommandIncident($exception, $this->redactArgv($_SERVER['argv'] ?? []))
+                    : $this->requestIncident($exception, $this->request());
 
                 // Report incident
                 $this->reportIncident($incident);
             }
         } catch (Throwable $e) {
-            if ($this->config['debug']) {
-                dump($e);
-            }
+            $this->logFailure($e);
+        }
+    }
+
+    /**
+     * A Gitlab\Client without the redirect plugin: it re-sends the PRIVATE-TOKEN header (and on 307/308 the issue)
+     * to whatever host a redirect points at, including plain http.
+     */
+    public static function client(Builder $builder): Client
+    {
+        $client = new Client($builder);
+        $builder->removePlugin(RedirectPlugin::class);
+
+        return $client;
+    }
+
+    /**
+     * Reporting runs inside the application's exception handling, so a failure is logged rather than thrown. Only
+     * the exception's class and message are logged unless `debug` is on; nothing is written to the response.
+     */
+    private function logFailure(Throwable $e): void
+    {
+        try {
+            Log::warning('GitLab reporter could not report an exception.', !empty($this->config['debug'])
+                ? ['exception' => $e]
+                : ['error' => get_class($e) . ': ' . $e->getMessage()]);
+        } catch (Throwable) {
+            // A broken log channel must not break the application that is already handling an exception.
         }
     }
 
@@ -112,63 +177,136 @@ class GitlabReportService
     }
 
     /**
-     * Hides any sensitive information in a request object.
-     *
-     * @param Request $request
-     *
-     * @return Request
+     * Builds the incident from redacted copies of the request data. The live request and session are never
+     * modified: the application keeps running (and saves its session) after reporting.
      */
-    private function redactRequest(Request $request): Request
+    private function requestIncident(Throwable $exception, Request $request): RequestIncident
     {
-        $request->query->replace($this->redactArray($request->query->all()));
-        $request->request->replace($this->redactArray($request->request->all()));
+        $user = RequestIncident::userAttributes($request, $this->config['user-fields'] ?? ['id']);
 
-        if ($request->hasSession()) {
-            $request->session()->replace($this->redactArray($request->session()->all()));
-        }
-
-        return $request;
+        return new RequestIncident(
+            $exception,
+            $request,
+            $this->redactArray($request->query->all()),
+            $this->redactArray($request->all()),
+            $request->hasSession() ? $this->redactArray($request->session()->all()) : [],
+            $user === null ? null : $this->redactArray($user),
+        );
     }
 
     /**
-     * Redacts an array (recursive loop).
-     *
-     * @param $array
-     *
-     * @return mixed
+     * Redacts `--key=value` and `--key value` console options whose key is a redacted field.
      */
-    private function redactArray($array): mixed
+    private function redactArgv(array $argv): array
     {
-        foreach ($array as $key => $value) {
-            if (is_array($array[$key])) {
-                $array[$key] = $this->redactArray($array[$key]);
+        $argv = array_values($argv);
+        $redactNext = false;
+
+        foreach ($argv as $i => $arg) {
+            $arg = (string) $arg;
+
+            if ($redactNext && !str_starts_with($arg, '-')) {
+                $argv[$i] = '[redacted]';
+                $redactNext = false;
+                continue;
             }
 
-            if (is_string($array[$key]) || is_bool($array[$key]) || is_numeric($array[$key]) || is_null($array[$key])) {
-                $array[$key] = $this->redact($key, $value);
+            $redactNext = false;
+
+            if (preg_match('/^(--?)([^=]+)(=.*)?$/s', $arg, $matches) && $this->isRedacted($matches[2])) {
+                if (isset($matches[3])) {
+                    $argv[$i] = "{$matches[1]}{$matches[2]}=[redacted]";
+                } else {
+                    $redactNext = true;
+                }
             }
+        }
+
+        return $argv;
+    }
+
+    /**
+     * Redacts an array (recursive loop). A matching key redacts its whole value, nested arrays included. String values
+     * that are URLs get their query parameters redacted the same way.
+     */
+    private function redactArray(array $array): array
+    {
+        foreach ($array as $key => $value) {
+            $array[$key] = match (true) {
+                $this->isRedacted($key) => '[redacted]',
+                is_array($value) => $this->redactArray($value),
+                is_string($value) => $this->redactUrl($value),
+                default => $value,
+            };
         }
 
         return $array;
     }
 
     /**
-     * Simple redact function. Matching is case-insensitive so that fields such
-     * as `Authorization` or `API_KEY` are caught regardless of their casing.
-     *
-     * @param $key
-     * @param $value
-     *
-     * @return mixed
+     * Redacts the query parameters of a URL value, such as the `_previous.url` and `url.intended` Laravel keeps in the
+     * session. Values that aren't URLs, or whose query has nothing to redact, are returned unchanged.
      */
+    private function redactUrl(string $value): string
+    {
+        if (!preg_match('#^https?://[^?\s]*\?#i', $value)) {
+            return $value;
+        }
+
+        [$url, $rest] = explode('?', $value, 2);
+        [$query, $fragment] = array_pad(explode('#', $rest, 2), 2, null);
+        parse_str($query, $params);
+        $redacted = $this->redactArray($params);
+
+        if ($redacted === $params) {
+            return $value;
+        }
+
+        return $url . '?' . Arr::query($redacted) . ($fragment === null ? '' : "#{$fragment}");
+    }
+
     private function redact($key, $value): mixed
     {
-        $fields = array_map('strtolower', $this->config['redacted-fields'] ?? []);
+        return $this->isRedacted($key) ? '[redacted]' : $value;
+    }
 
-        // Redact if the field name is in redacted-fields
-        return in_array(strtolower((string) $key), $fields, true)
-            ? '[redacted]'
-            : $value;
+    private function isRedacted(int|string $key): bool
+    {
+        $key = self::normalizeKey((string) $key);
+
+        foreach ([...self::REDACTED_FIELDS, ...($this->config['redacted-fields'] ?? [])] as $pattern) {
+            if (Str::is(self::normalizeKey($pattern), $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function normalizeKey(string $key): string
+    {
+        return str_replace(['_', '-', '.', ' '], '', strtolower($key));
+    }
+
+    /**
+     * Global limit on GitLab lookups for incidents that aren't cached yet, so a flood of distinct errors can't
+     * hammer GitLab or slow down every failing request.
+     */
+    private function withinRateLimit(): bool
+    {
+        $max = $this->config['rate-limit'] ?? null;
+
+        if (empty($max)) {
+            return true;
+        }
+
+        if (RateLimiter::tooManyAttempts('gitlab-report', (int) $max)) {
+            return false;
+        }
+
+        RateLimiter::hit('gitlab-report', 60);
+
+        return true;
     }
 
     /**
@@ -201,6 +339,17 @@ class GitlabReportService
             return;
         }
 
+        if (!$this->withinRateLimit()) {
+            // Logged once per minute, so a flood of errors can't silently push genuine reports out.
+            if (Cache::add('gitlab_reporter_rate_limited', true, 60)) {
+                Log::warning('GitLab reporter rate limit reached, new errors are not reported for the rest of this minute.', [
+                    'rate-limit' => $this->config['rate-limit'],
+                ]);
+            }
+
+            return;
+        }
+
         $existing = $this->findOpenIssue($incident);
 
         if ($existing === null) {
@@ -218,13 +367,22 @@ class GitlabReportService
      */
     private function findOpenIssue(Incident $incident): ?array
     {
-        // Search for issues in gitlab with the exact unique hash from the incident
+        // Only issues this token created, with the exact identifier line: anyone else who can create or edit issues
+        // could otherwise quote a hash and capture (or suppress) the reports for that error.
         $issues = $this->client->issues()->all($this->config['project_id'], [
             'search' => $incident->hash(),
             'state' => 'opened',
+            'scope' => 'created-by-me',
         ]);
+        $identifier = "Identifier: `{$incident->hash()}`";
 
-        return $issues[0] ?? null;
+        foreach ($issues as $issue) {
+            if (str_contains((string) ($issue['description'] ?? ''), $identifier)) {
+                return $issue;
+            }
+        }
+
+        return null;
     }
 
     /**

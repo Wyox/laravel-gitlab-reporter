@@ -17,11 +17,9 @@ class CommandSummaryComponent extends MarkdownComponent
         $exception = $this->incident->exception;
         $exceptionName = get_class($exception);
         $args = $this->incident->argv;
-        $commandName = $args[0];
-        $arguments = implode(" ", array_slice($args, 1));
-        $message = trim(preg_replace('/\s+/', ' ', !empty($exception->getMessage())
-            ? $exception->getMessage()
-            : get_class($exception)));
+        $commandName = $this->cell((string) ($args[0] ?? ''));
+        $arguments = $this->cell(implode(" ", array_slice($args, 1)));
+        $message = $this->cell($this->incident->message());
 
         // Identifier is after the table as this makes it invisible to the user and allows us to search for the issue.
 
@@ -32,8 +30,8 @@ class CommandSummaryComponent extends MarkdownComponent
 | Type of   | {$exceptionName} |
 | Message   | {$message} |
 | File      | {$exception->getFile()}:{$exception->getLine()} |
-| Command   | `{$commandName}` |
-| Arguments  | `{$arguments}` | Identifier: `{$this->incident->hash()}`
+| Command   | {$commandName} |
+| Arguments  | {$arguments} | Identifier: `{$this->incident->hash()}`
 
 EOF;
     }

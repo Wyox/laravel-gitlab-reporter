@@ -15,14 +15,10 @@ class SQLComponent extends MarkdownComponent
             return "";
         }
 
-        $str = "#### SQL\n\n```sql\n";
-        $str .= Str::replaceArray(
-            '?',
-            $exception->getBindings(),
-            $exception->getSql()
-        ) . "\n\r\n\r";
-        $str .= '```' . "\n\r\n\r";
+        $sql = config('gitlab-report.sql-bindings', false)
+            ? Str::replaceArray('?', $exception->getBindings(), $exception->getSql())
+            : $exception->getSql();
 
-        return $str;
+        return "#### SQL\n\n" . $this->fence($sql, 'sql') . "\n\n";
     }
 }

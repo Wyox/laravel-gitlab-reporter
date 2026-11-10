@@ -2,6 +2,7 @@
 
 namespace Wyox\GitlabReport\Components;
 
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use Wyox\GitlabReport\Incidents\RequestIncident;
 
@@ -17,16 +18,13 @@ class RequestSummaryComponent extends MarkdownComponent
         $request = $this->incident->request;
         $exception = $this->incident->exception;
         $exceptionName = get_class($exception);
-        if (!empty($request)) {
-            $authenticatedUser = $request->user();
-            $isAuthenticated = !empty($authenticatedUser) ? 'Yes' : 'No';
-        }
+        $isAuthenticated = $this->incident->user !== null ? 'Yes' : 'No';
+        $message = $this->cell($this->incident->message());
+        $path = $this->cell($request->getPathInfo());
 
-        // Remove any new lines as that will break the Markdown table
-        $message = trim(preg_replace('/\s+/', ' ', !empty($exception->getMessage())
-            ? $exception->getMessage()
-            : get_class($exception)));
-
+        // Built from the redacted query copy, never from the raw request URI.
+        $query = $this->incident->query;
+        $url = $this->cell($request->url() . (empty($query) ? '' : '?' . Arr::query($query)));
 
         return <<<EOF
 #### Exception summary
@@ -37,8 +35,8 @@ class RequestSummaryComponent extends MarkdownComponent
 | File      | {$exception->getFile()}:{$exception->getLine()} |
 | Method    | {$request->getMethod()} |
 | Schema    | {$request->getScheme()} |
-| Path      | {$request->getPathInfo()} |
-| URL       | {$request->fullUrlWithoutQuery([])} |
+| Path      | {$path} |
+| URL       | {$url} |
 | Authenticated | {$isAuthenticated} | Identifier: `{$this->incident->hash()}`
 
 

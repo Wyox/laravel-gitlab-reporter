@@ -53,6 +53,8 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('app.key', 'base64:' . base64_encode(str_repeat('k', 32)));
+        // Fresh per test, so the issue cache and the rate limiter never carry over between tests.
+        $app['config']->set('cache.default', 'array');
         $app['config']->set('gitlab-report.url', 'https://gitlab.test');
         $app['config']->set('gitlab-report.token', 'secret-token');
         $app['config']->set('gitlab-report.project_id', 42);
@@ -70,6 +72,17 @@ abstract class TestCase extends Orchestra
     protected function respond(int $status, mixed $body = []): void
     {
         $this->gitlab->append(new Response($status, ['Content-Type' => 'application/json'], json_encode($body)));
+    }
+
+    /** Answer the issue search with an open issue whose description carries the identifier that was searched for. */
+    protected function respondWithOpenIssue(int $iid): void
+    {
+        $this->gitlab->append(function (\Psr\Http\Message\RequestInterface $request) use ($iid) {
+            parse_str($request->getUri()->getQuery(), $query);
+            $issue = ['id' => $iid, 'iid' => $iid, 'description' => "Identifier: `{$query['search']}`"];
+
+            return new Response(200, ['Content-Type' => 'application/json'], json_encode([$issue]));
+        });
     }
 
     /** Queue the happy path: no open issue with this hash yet, then a successful create. */

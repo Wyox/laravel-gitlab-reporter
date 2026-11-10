@@ -25,7 +25,7 @@ class ContextComponent extends MarkdownComponent
         $rows['PHP'] = PHP_VERSION;
 
         $host = gethostname();
-        if ($host !== false) {
+        if ($host !== false && config('gitlab-report.context-host', true)) {
             $rows['Host'] = $host;
         }
 
@@ -36,23 +36,23 @@ class ContextComponent extends MarkdownComponent
 
             if (!empty($request)) {
                 $ip = $request->ip();
-                if (!empty($ip)) {
+                if (!empty($ip) && config('gitlab-report.context-client-ip', true)) {
                     $rows['Client IP'] = $ip;
                 }
 
                 $agent = $request->userAgent();
-                if (!empty($agent)) {
-                    $rows['User agent'] = trim(preg_replace('/\s+/', ' ', $agent));
+                if (!empty($agent) && config('gitlab-report.context-user-agent', true)) {
+                    $rows['User agent'] = $agent;
                 }
             }
         }
 
         $table = "#### Context\n\n|  Key      |  Value   |\n| :-------- | :------- |\n";
         foreach ($rows as $key => $value) {
-            $table .= "| {$key} | {$value} |\n";
+            $table .= "| {$key} | {$this->cell($value)} |\n";
         }
 
-        $table .= "\n\r\n\r";
+        $table .= "\n\n";
 
         return $table;
     }

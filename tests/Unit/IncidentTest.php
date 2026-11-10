@@ -61,14 +61,15 @@ class IncidentTest extends TestCase
         $this->assertEquals($incident1->hash(), $incident2->hash());
     }
 
-    public function test_request_incident_signature_contains_path(): void
+    public function test_request_incident_signature_contains_normalized_path_without_a_route(): void
     {
         $exception = new Exception('Test error');
         $request = Request::create('/users/123', 'GET');
 
         $incident = new RequestIncident($exception, $request);
 
-        $this->assertStringContainsString('users/123', $incident->signature());
+        $this->assertStringContainsString('users/<n>', $incident->signature());
+        $this->assertStringNotContainsString('123', $incident->signature());
     }
 
     public function test_different_exceptions_produce_different_hashes(): void

@@ -20,7 +20,7 @@ class CommandIncident extends Incident
 
     public function signature(): string
     {
-        return "command_" . implode("_", $this->argv) . "_" . get_class($this->exception) . "_" . $this->normalize($this->exception->getMessage()) . $this->exception->getFile() . ":" . $this->exception->getLine();
+        return "command_" . implode("_", $this->argv) . "_" . get_class($this->exception) . "_" . $this->normalize($this->message()) . $this->exception->getFile() . ":" . $this->exception->getLine();
     }
 
     public function components(): array

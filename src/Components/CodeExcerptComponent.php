@@ -17,6 +17,10 @@ class CodeExcerptComponent extends MarkdownComponent
 
     public function render(): string
     {
+        if (!config('gitlab-report.code-excerpt', true)) {
+            return '';
+        }
+
         $exception = $this->incident->exception;
         $file = $exception->getFile();
         $line = $exception->getLine();
@@ -47,18 +51,9 @@ class CodeExcerptComponent extends MarkdownComponent
             $snippet .= "{$marker} {$label} | {$lines[$number - 1]}\n";
         }
 
-        $relative = $this->relativePath($file);
+        $location = $this->cell($this->relativePath($file) . ":{$line}");
 
-        return <<<EOF
-#### Code
-
-`{$relative}:{$line}`
-
-```php
-{$snippet}```
-
-
-EOF;
+        return "#### Code\n\n{$location}\n\n" . $this->fence($snippet, 'php') . "\n\n";
     }
 
     /**

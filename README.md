@@ -19,7 +19,7 @@ Install with composer
 composer require wyox/laravel-gitlab-reporter
 ```
 
-This package supports Laravel 12 and 13 (PHP 8.2 or higher).
+This package supports Laravel 12 (PHP 8.2 or higher) and Laravel 13 (PHP 8.3 or higher), and is tested up to PHP 8.5.
 
 To use the Gitlab reporter, open your `bootstrap/app.php` and add the code shown below between the comments to the withExceptions closure
 ```php 
@@ -44,12 +44,13 @@ GITLAB_REPORT_LABELS=
 GITLAB_USE_CACHE=true
 ```
 
-I would suggest making a separate user account for the reporter and only let it access Issues and allow it for issue
-creation.
-This way you can ensure if your server or code gets compromised you won't give full access to the server
+Reports contain request data, so treat the project they go to as sensitive:
 
-To retrieve an access token go to your gitlab server to `profile/personal_access_tokens` and generate a token for using
-the API
+- Use a **private** project. In an internal project every signed-in user of your GitLab instance can read the reports.
+- Use a **project access token** (project -> Settings -> Access tokens) with the **Guest** role, only the `api` scope
+  and an expiry date. Guest is enough to create issues, add notes and search them. A project access token belongs to a
+  bot user without a password, so it isn't blocked when a password expires, and it can't reach your other projects.
+- Use `https://` for `GITLAB_REPORT_URL`. Redirects are not followed, so the token is never sent anywhere else.
 
 For your Project ID you need to go to your project -> Settings -> General -> General Project settings. There should be a
 box with Project ID
@@ -77,10 +78,46 @@ been added by default
 
 # Hiding fields in reports
 
-In some cases you don't want reports to contain passwords of your clients. You can extend or replace values in the
-configuration file to include more fields that shouldn't show up in a report. All these fields will be replaced
-with [redacted]. Matching is case-insensitive, so `Authorization` and `authorization` are both redacted. A set of
-common sensitive field names (passwords, tokens, secrets, api keys, authorization, etc.) is redacted by default.
+Query parameters, POST data, session data, user attributes and `--key=value` console options are redacted before they
+are put in a report. A built-in list of field names is always redacted: anything containing `password`, `secret` or
+`token`, api keys, `key`, `signature`, `code`, `otp`, `pin`, `authorization`, cookies, two-factor secrets and recovery
+codes, and card numbers. That includes Laravel's CSRF token (`_token`), the password hash `AuthenticateSession` keeps in
+the session (`password_hash_*`) and the signature of signed URLs. See `GitlabReportService::REDACTED_FIELDS`. Fields you
+list in `redacted-fields` are redacted on top of that list, so publishing the config can't switch the defaults off.
+Matching ignores case and `_`, `-`, `.` and spaces (`api_token`, `X-Api-Token` and `apiToken` are the same field), `*` is
+a wildcard (`customer_*`), and a matching key redacts its whole value, nested arrays included. Values that are URLs, like
+the previous and intended URL Laravel keeps in the session, get their query parameters redacted the same way. Redaction
+works on copies: the request and session your application keeps using are never changed.
+
+Only the `id` of the logged-in user is reported. Add attributes with `user-fields`; everything else (password hash,
+remember token, e-mail, ...) is left out.
+
+The following can't be redacted by field name, so check them for your application:
+
+- **Exception messages** (title, summary and "Caused by") often contain user input. Set `message-redactor` to a callable
+  that receives the message and returns what should be reported. Use an invokable class name or
+  `[MyRedactor::class, 'method']` rather than a closure, so `php artisan config:cache` keeps working.
+- **SQL bindings** are left out by default: the SQL block and `QueryException` messages show `?` placeholders. Set
+  `sql-bindings` to `true` to include them.
+- **Positional console arguments** (`artisan user:create secret`) are reported as-is, only options are redacted.
+- **Secrets in the URL path** (`reset-password/{token}`) show in the Path and URL rows. Only the query string is redacted.
+- **Objects** (for example a model stored in the session) are dumped with all their properties; only arrays are redacted.
+
+# Configuration
+
+All options live in the published `config/gitlab-report.php`:
+
+| Option | Default | |
+| :----- | :------ | :- |
+| `redacted-fields` | `[]` | Extra field names to redact, on top of the built-in list. |
+| `user-fields` | `['id']` | Attributes of the logged-in user that are reported. |
+| `sql-bindings` | `false` | Put query bindings in the SQL block and `QueryException` messages. |
+| `message-redactor` | `null` | Callable that rewrites exception messages before they are reported. |
+| `context-host` / `context-client-ip` / `context-user-agent` | `true` | Rows in the Context section. The client IP and user agent are personal data under the GDPR. |
+| `code-excerpt` | `true` | The Code section with source lines around the failing line. |
+| `rate-limit` | `30` | GitLab lookups per minute for errors that aren't cached yet. `null` disables the limit. |
+| `timeout` | `5` (`GITLAB_REPORT_TIMEOUT`) | Seconds before a request to GitLab is given up; 0 or less means 5. Ignored when you bind your own `Gitlab\Client` in the container. |
+| `debug` | `false` (`GITLAB_REPORT_DEBUG`) | When reporting fails a warning is logged with the error's class and message; with `debug` the full exception is logged. |
 
 # What's in a report
 
@@ -89,15 +126,29 @@ Each issue description is built from a number of sections:
 - **Exception summary** - type, message, file/line and (for HTTP) the request method, URL and authentication state.
 - **Context** - environment, Laravel/PHP version, host, timestamp and (for HTTP) client IP and user agent.
 - **Code** - a source excerpt around the line that threw the exception.
-- **SQL** - the failing query (only for `QueryException`).
-- **Query params / POST / Session / User** - sanitized request data (HTTP only).
-- **Trace** - the stack trace, followed by a **Caused by** section for every previous exception in the chain.
+- **SQL** - the failing query with `?` placeholders (only for `QueryException`).
+- **Query params / POST / Session / User** - redacted request data and the allow-listed user attributes (HTTP only).
+- **Trace** - the stack trace without call arguments, followed by a **Caused by** section for every previous exception
+  in the chain.
+
+Values that come from the client (message, path, URL, user agent, console arguments) are rendered as inline code, and
+code blocks use a fence longer than any backticks in their content, so reported data can't inject links, images,
+@mentions or quick actions into the issue. The title puts the message in a code span too, so mentions and `#123`
+references in a message don't notify anyone or link issues. Invalid UTF-8 is replaced and NUL bytes and bidirectional
+control characters are removed, so a malformed value can't make GitLab reject the report. Table cells and dumped strings
+are cut at 10000 characters.
+
+When a report can't be sent (GitLab unreachable, token rejected, ...) a warning is written to your application log. When
+the `rate-limit` is reached, a warning is logged once per minute.
 
 # Duplicate issues and recurrences
 
-Exceptions are deduplicated using a hash of the request/command, exception class and a normalized message
-(dynamic ids, UUIDs and hashes are masked) plus the file and line. When an open issue already exists for an
-exception, a throttled "occurred again" note is added to it instead of creating a duplicate. The throttling
+Exceptions are deduplicated using a hash of the route (the template, e.g. `users/{user}`, not the concrete path or the
+Host header) or command, exception class and a normalized message (dynamic ids, UUIDs and hashes are masked) plus the
+file and line. When an open issue already exists for an
+exception, a throttled "occurred again" note is added to it instead of creating a duplicate. Only open issues created by
+the reporter's own token that contain the exact `Identifier:` line count, so an issue someone else writes can't take
+over the reports. The throttling
 window is shared with the local cache (`GITLAB_USE_CACHE`).
 
 # Development
