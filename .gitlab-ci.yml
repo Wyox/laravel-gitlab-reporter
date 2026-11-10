@@ -7,15 +7,20 @@ stages: [test]
   variables:
     COMPOSER_HOME: $CI_PROJECT_DIR/.composer
     COMPOSER_ALLOW_SUPERUSER: "1"
+    # A fixed Composer release, verified against its published SHA-256 before it runs.
+    COMPOSER_VERSION: "2.11.2"
+    COMPOSER_SHA256: "dd158c0afd41d15fac89e1b4e47b5d42911fe316c3687cd5edac98319b25d028"
   cache:
     key: composer-php$PHP-laravel$LARAVEL-$DEPS
     paths: [.composer/cache]
   before_script:
     - apk add --no-cache bash git unzip
-    - php -r "copy('https://getcomposer.org/download/latest-stable/composer.phar', '/usr/local/bin/composer');"
+    - php -r "copy('https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar', '/usr/local/bin/composer');"
+    - echo "${COMPOSER_SHA256}  /usr/local/bin/composer" | sha256sum -c -
     - chmod +x /usr/local/bin/composer
   script:
     - docker/run-tests.sh "$LARAVEL" "$DEPS" --log-junit junit.xml
+    - composer audit --no-dev
   artifacts:
     when: always
     reports:

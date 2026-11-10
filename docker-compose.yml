@@ -19,7 +19,8 @@ services:
       - .:/app
     command: sh -c "test -d vendor || composer update; exec vendor/bin/testbench serve --host=0.0.0.0 --port=8000"
     ports:
-      - "${APP_PORT:-8000}:8000"
+      # Localhost only: the workbench runs with debug on and reports to GitLab on any request.
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     environment:
       # Point these at a real GitLab project to smoke-test against the real API.
       GITLAB_REPORT_URL: ${GITLAB_REPORT_URL:-http://gitlab}
@@ -39,7 +40,7 @@ services:
       - ./docker/gitlab-mock:/mock
     command: php -S 0.0.0.0:80 /mock/server.php
     ports:
-      - "${GITLAB_MOCK_PORT:-8081}:80"
+      - "127.0.0.1:${GITLAB_MOCK_PORT:-8081}:80"
 
   test:
     <<: *php
