@@ -99,3 +99,28 @@ Exceptions are deduplicated using a hash of the request/command, exception class
 (dynamic ids, UUIDs and hashes are masked) plus the file and line. When an open issue already exists for an
 exception, a throttled "occurred again" note is added to it instead of creating a duplicate. The throttling
 window is shared with the local cache (`GITLAB_USE_CACHE`).
+
+# Development
+
+Everything runs in Docker, no local PHP needed.
+
+```bash
+docker compose up                                  # workbench app on http://localhost:8000
+docker compose run --rm app vendor/bin/phpunit     # quick test run (add --filter ...)
+docker compose run --rm test 12                    # one Laravel version (12, 13 or 14 = dev-master)
+PHP_VERSION=8.2 docker compose run --rm test 12    # ...on another PHP version
+bin/matrix                                         # every supported PHP/Laravel combination
+bin/matrix laravel13 php8.4                        # a subset
+```
+
+The workbench (`workbench/`, served by Orchestra Testbench) has routes that throw request, SQL and session exceptions,
+plus a console command: `docker compose exec app vendor/bin/testbench boom`. Edits to `src/` are live, just refresh.
+
+By default the reports go to a fake GitLab API (`docker/gitlab-mock/server.php`) that rejects what GitLab would reject
+(title > 255 characters, description > 1048576 characters, invalid UTF-8) and writes each issue to
+`docker/gitlab-mock/issues/<id>.md`. Delete those files to start over. To test against a real GitLab, set
+`GITLAB_REPORT_URL`, `GITLAB_REPORT_TOKEN` and `GITLAB_REPORT_PROJECT_ID` before `docker compose up`.
+Use `APP_PORT` / `GITLAB_MOCK_PORT` if 8000 / 8081 are taken.
+
+The tests in `tests/Integration` boot a real Laravel app and only fake the HTTP calls to GitLab, asserting on the exact
+requests that would be sent.

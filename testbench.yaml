@@ -1,0 +1,17 @@
+laravel: '@testbench'
+
+providers:
+  - Wyox\GitlabReport\ServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+env:
+  - APP_DEBUG=true
+  - DB_DATABASE=":memory:"
+  - SESSION_DRIVER=file
+  - CACHE_STORE=file
+
+workbench:
+  start: '/'
+  discovers:
+    web: true
+    commands: true

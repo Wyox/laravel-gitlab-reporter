@@ -32,7 +32,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Wyox\\GitlabReport\\Tests\\": "tests/"
+            "Wyox\\GitlabReport\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
         }
     },
     "extra": {

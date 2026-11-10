@@ -1,0 +1,38 @@
+# Same combinations as bin/matrix.
+stages: [test]
+
+.phpunit:
+  stage: test
+  image: php:${PHP}-cli-alpine
+  variables:
+    COMPOSER_HOME: $CI_PROJECT_DIR/.composer
+    COMPOSER_ALLOW_SUPERUSER: "1"
+  cache:
+    key: composer-php$PHP-laravel$LARAVEL-$DEPS
+    paths: [.composer/cache]
+  before_script:
+    - apk add --no-cache bash git unzip
+    - php -r "copy('https://getcomposer.org/download/latest-stable/composer.phar', '/usr/local/bin/composer');"
+    - chmod +x /usr/local/bin/composer
+  script:
+    - docker/run-tests.sh "$LARAVEL" "$DEPS" --log-junit junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: junit.xml
+
+test:
+  extends: .phpunit
+  parallel:
+    matrix:
+      - { PHP: "8.2", LARAVEL: "12", DEPS: lowest }
+      - { PHP: ["8.2", "8.3", "8.4", "8.5"], LARAVEL: "12", DEPS: stable }
+      - { PHP: ["8.3", "8.4", "8.5"], LARAVEL: "13", DEPS: stable }
+
+# Unreleased Laravel (dev-master): early warning, never blocks a pipeline.
+test-next:
+  extends: .phpunit
+  allow_failure: true
+  parallel:
+    matrix:
+      - { PHP: ["8.4", "8.5"], LARAVEL: "14", DEPS: stable }

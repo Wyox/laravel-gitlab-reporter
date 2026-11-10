@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Run the test-suite for every supported PHP/Laravel combination in Docker.
+#
+#   bin/matrix                   everything
+#   bin/matrix php8.4            only PHP 8.4
+#   bin/matrix laravel13         only Laravel 13
+#   bin/matrix php8.3 laravel12  both filters must match
+#
+# Keep in sync with .gitlab-ci.yml. Laravel 14 = unreleased dev-master; failures there don't fail the run.
+# Each combination keeps its own vendor/ in the "matrix" volume, logs go to .matrix/<combo>.log.
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+combos=(
+    "8.2 12 lowest"
+    "8.2 12" "8.3 12" "8.4 12" "8.5 12"
+    "8.3 13" "8.4 13" "8.5 13"
+    "8.4 14" "8.5 14"
+)
+
+mkdir -p .matrix
+failed=0
+summary=()
+
+for combo in "${combos[@]}"; do
+    read -r php laravel deps <<<"$combo"
+    deps=${deps:-stable}
+    label="php$php laravel$laravel $deps"
+
+    for filter in "$@"; do
+        [[ $label == *"$filter"* ]] || continue 2
+    done
+
+    log=".matrix/php$php-laravel$laravel-$deps.log"
+    printf '%-28s ' "$label"
+    if PHP_VERSION=$php docker compose run --rm -T test "$laravel" "$deps" --colors=never >"$log" 2>&1; then
+        result="PASS"
+    elif [[ $laravel == 14 ]]; then
+        result="FAIL (allowed, unreleased)"
+    else
+        result="FAIL"
+        failed=1
+    fi
+    echo "$result  $(grep -E '^(OK|Tests:)' "$log" | tail -1)"
+    summary+=("$label: $result -> $log")
+done
+
+if [[ $failed == 1 ]]; then
+    echo
+    printf '%s\n' "${summary[@]}" | grep 'FAIL$'
+fi
+exit $failed

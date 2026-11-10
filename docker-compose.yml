@@ -1,30 +1,57 @@
+# Local development & testing. See README "Development".
+#   docker compose up                       -> workbench app on :8000 reporting to the mock GitLab on :8081
+#   docker compose run --rm app vendor/bin/phpunit   -> quick test run on the dev install
+#   docker compose run --rm test 13         -> isolated run for one Laravel version (PHP_VERSION=8.3 to switch PHP)
+#   bin/matrix                              -> every supported PHP/Laravel combination
+
+x-php: &php
+  build:
+    context: docker
+    args:
+      PHP_VERSION: ${PHP_VERSION:-8.4}
+  image: laravel-gitlab-reporter-php:${PHP_VERSION:-8.4}
+
 services:
-  laravel11-php82:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        PHP_VERSION: "8.2"
-        LARAVEL_VERSION: "11"
-        TESTBENCH_VERSION: "9.*"
-        PHPUNIT_VERSION: "11.*"
+  app:
+    <<: *php
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - .:/app
+    command: sh -c "test -d vendor || composer update; exec vendor/bin/testbench serve --host=0.0.0.0 --port=8000"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      # Point these at a real GitLab project to smoke-test against the real API.
+      GITLAB_REPORT_URL: ${GITLAB_REPORT_URL:-http://gitlab}
+      GITLAB_REPORT_TOKEN: ${GITLAB_REPORT_TOKEN:-mock-token}
+      GITLAB_REPORT_PROJECT_ID: ${GITLAB_REPORT_PROJECT_ID:-1}
+      GITLAB_REPORT_LABELS: ${GITLAB_REPORT_LABELS:-bug}
+      GITLAB_USE_CACHE: "false"
+      GITLAB_REPORT_DEBUG: "true"
+    depends_on:
+      - gitlab
 
-  laravel12-php84:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        PHP_VERSION: "8.4"
-        LARAVEL_VERSION: "12"
-        TESTBENCH_VERSION: "10.*"
-        PHPUNIT_VERSION: "11.*"
+  # Fake GitLab issues API: stores issues in docker/gitlab-mock/issues and rejects what GitLab would reject.
+  gitlab:
+    <<: *php
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./docker/gitlab-mock:/mock
+    command: php -S 0.0.0.0:80 /mock/server.php
+    ports:
+      - "${GITLAB_MOCK_PORT:-8081}:80"
 
-  laravel13-php84:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        PHP_VERSION: "8.4"
-        LARAVEL_VERSION: "13"
-        TESTBENCH_VERSION: "11.*"
-        PHPUNIT_VERSION: "12.*"
+  test:
+    <<: *php
+    profiles: [test]
+    volumes:
+      - .:/app:ro
+      - matrix:/work
+      - composer-cache:/tmp/composer/cache
+    environment:
+      WORK_ROOT: /work
+    entrypoint: ["docker/run-tests.sh"]
+
+volumes:
+  matrix:
+  composer-cache:

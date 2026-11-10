@@ -10,3 +10,4 @@ coverage/
 
 # Docker
 .docker/
+.matrix/
