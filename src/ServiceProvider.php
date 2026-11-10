@@ -2,6 +2,8 @@
 
 namespace Wyox\GitlabReport;
 
+use Gitlab\Client;
+
 /**
  * Class ServiceProvider.
  */
@@ -32,7 +34,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                     $app->make('config')->get('gitlab-report', [])
                 );
 
-                return new GitlabReportService($config);
+                return new GitlabReportService($config, $app->make(Client::class));
             }
         );
 

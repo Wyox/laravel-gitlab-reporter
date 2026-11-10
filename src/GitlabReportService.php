@@ -33,11 +33,12 @@ class GitlabReportService
      * GitlabReportService constructor.
      *
      * @param $config
+     * @param Client|null $client Pre-built client, e.g. with a mocked HTTP layer in tests
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], ?Client $client = null)
     {
         if (!empty($config['token']) && !empty($config['url'])) {
-            $this->client = new Client();
+            $this->client = $client ?? new Client();
             $this->client->setUrl($config['url']);
             $this->client->authenticate($config['token'], Client::AUTH_HTTP_TOKEN);
         }
