@@ -38,7 +38,7 @@ class RequestSummaryComponent extends MarkdownComponent
 | Method    | {$request->getMethod()} |
 | Schema    | {$request->getScheme()} |
 | Path      | {$request->getPathInfo()} |
-| URL       | {$request->getScheme()}://{$request->getHttpHost()}{$request->getRequestUri()} |
+| URL       | {$request->fullUrlWithoutQuery([])} |
 | Authenticated | {$isAuthenticated} | Identifier: `{$this->incident->hash()}`
 
 
