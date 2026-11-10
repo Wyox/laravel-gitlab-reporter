@@ -8,11 +8,14 @@
     ],
     "license": "MIT",
     "require": {
-        "php": ">=8.2",
+        "php": "^8.2",
+        "illuminate/cache": "^12|^13",
+        "illuminate/http": "^12|^13",
         "illuminate/support": "^12|^13",
         "m4tthumphrey/php-gitlab-api": "^12.1",
-        "guzzlehttp/guzzle": "^7.11",
-        "http-interop/http-factory-guzzle": "^1.2"
+        "guzzlehttp/guzzle": "^7.15.2|^8.0.1",
+        "guzzlehttp/psr7": "^2.12.3|^3.0",
+        "symfony/var-dumper": "^7.2|^8.0"
     },
     "require-dev": {
         "orchestra/testbench": "^10.0|^11.0",
