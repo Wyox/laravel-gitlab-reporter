@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.1
+- Fix titles and descriptions being cut in the middle of a multibyte character
+- Fix redacted query parameters (e.g. `password`) leaking through the URL row of the issue
+- `Gitlab\Client` is resolved from the container, so it can be swapped out
+- Add integration tests, a Docker based workbench with a fake GitLab API, and a PHP/Laravel test matrix (`bin/matrix`, GitLab CI)
+- `composer.lock` is no longer tracked
+
 ## 3.0.0
 
 ### Breaking
