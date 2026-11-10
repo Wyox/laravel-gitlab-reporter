@@ -1,11 +1,30 @@
 # Changelog
 
-## 3.0.1
-- Fix titles and descriptions being cut in the middle of a multibyte character
-- Fix redacted query parameters (e.g. `password`) leaking through the URL row of the issue
-- `Gitlab\Client` is resolved from the container, so it can be swapped out
-- Add integration tests, a Docker based workbench with a fake GitLab API, and a PHP/Laravel test matrix (`bin/matrix`, GitLab CI)
-- `composer.lock` is no longer tracked
+## 3.1.0
+
+### Security
+- Only the user's `id` is reported by default (`user-fields`); the whole user row, password hash included, used to be sent.
+- Redaction works on copies, so the live request and session are no longer changed (which could log users out).
+- The built-in redaction list always applies, is broader, and ignores case and `_`/`-`/`.` (`apiToken` = `api_token`).
+  Query strings in URL values (like the session's previous URL) are redacted too.
+- SQL bindings, console option values and stack trace arguments are left out of reports.
+- Client-controlled values can't inject markdown, mentions or quick actions; titles put the message in a code span.
+- Invalid UTF-8 no longer makes a report fail silently.
+- The GitLab token is no longer sent along when GitLab redirects.
+- Recurrence notes only go to issues created by the reporter itself.
+- `debug` logs failures instead of dumping them into the HTTP response.
+
+### Added
+- `message-redactor`, `sql-bindings`, `rate-limit` (default 30/min), `timeout` (default 5s) and options to switch off
+  the host, client IP, user agent and code excerpt.
+- Failed reports and reaching the rate limit are logged.
+- A `Gitlab\Client` bound in the container is used, so the HTTP client can be swapped out.
+
+### Changed
+- Errors are deduplicated on the route template, not the concrete path or Host. Existing open issues get one new issue.
+- Requires guzzle `^7.15.2|^8.0.1` and psr7 `^2.12.3|^3.0`; Guzzle 8 works with Laravel 13.
+- Tested on PHP 8.2 to 8.5 with Laravel 12 and 13.
+- Fixed titles and descriptions being cut in the middle of a multibyte character.
 
 ## 3.0.0
 
