@@ -20,7 +20,7 @@ abstract class Incident
             ? $this->exception->getMessage()
             : get_class($this->exception);
 
-        return substr("BUG: {$message}", 0, 254);
+        return mb_substr("BUG: {$message}", 0, 254);
     }
 
     /**
@@ -38,7 +38,7 @@ abstract class Incident
         }, $components)));
 
         // Make sure our markdown string doesn't hit GitLab description limits
-        return substr($markdown, 0, 1048575);
+        return mb_strcut($markdown, 0, 1048575);
     }
 
     /**
